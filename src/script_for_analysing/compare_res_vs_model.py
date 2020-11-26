@@ -12,17 +12,18 @@ from sklearn import decomposition, datasets
 from sklearn.preprocessing import StandardScaler
 
 class analyse:
-    def __init__(self,dataPath,drive,mergedDataPath,modelDataPath):   
+    def __init__(self,dataPath,drive,mergedDataPath,modelDataPath,results_folder):   
         # Docstring    
         "Class container for analysing functions."
         
         # Set paths
-        self.dataPath               = dataPath
-        self.drive                  = drive
+        self.dataPath       = dataPath
+        self.drive          = drive
+        self.results_folder = results_folder
 
         # Load data
-        self.merge_data = pd.read_csv(mergedDataPath)
-        self.model_data = pd.read_csv(modelDataPath)
+        self.merge_data = pd.read_csv(self.results_folder + 'filtered_responses/' + mergedDataPath)
+        self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + modelDataPath)
         
     
     def get_responses(self):
@@ -46,7 +47,7 @@ class analyse:
     def info(self):
         # Get general info on data
         self.data_description = self.response_data.describe()
-        self.data_description.to_csv('self.data_description.csv')
+        self.data_description.to_csv(self.results_folder + 'filtered_responses/' + 'self.data_description.csv')
         # print(self.data_description)
 
 
@@ -71,7 +72,7 @@ class analyse:
         plt.title("First half vs. Last half | R^2 = %s" %r2_fl)
         plt.xlabel("First half")
         plt.ylabel("Second half")
-        plt.savefig('first_half_vs_last_half.png')
+        plt.savefig(self.results_folder + 'correlation_images' + 'first_half_vs_last_half.png')
 
 
     def model(self):
@@ -99,7 +100,7 @@ class analyse:
             x_s = np.arange(0, self.model_data[parameter].max())
             fig_fl = plt.plot(x_s,linear_model_fn(x_s),color="green")
 
-            plt.savefig('model_vs_human_' + parameter + '.png')
+            plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')
 
     
     def risky_images(self):
@@ -112,12 +113,12 @@ class analyse:
         i = 1
         for image in least_risky:
             # os.path.join(self.dataPath + self.drive + '/image_02/data')
-            shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.dataPath +'/images/' +'least_risky_%s.png' %i)
+            shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'most_least_risky_images/' +'least_risky_%s.png' %i)
             i+=1
         i = 1
         for image in most_risky:
             # os.path.join(self.dataPath + self.drive + '/image_02/data')
-            shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.dataPath +'/images/' +'most_risky_%s.png' %i)
+            shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'most_least_risky_images/' +'most_risky_%s.png' %i)
             i+=1
 
 
@@ -159,10 +160,11 @@ class analyse:
 if __name__ == "__main__":
     dataPath        = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
     drive           = '/test_images'
+    results_folder  = '/home/jim/HDDocuments/university/master/thesis/results/'
     mergedDataPath  = 'merged_data.csv'
-    modelDataPath   = dataPath + '/model_results.csv'
+    modelDataPath   = 'model_results.csv'
     
-    data = analyse(dataPath,drive,mergedDataPath,modelDataPath)
+    data = analyse(dataPath,drive,mergedDataPath,modelDataPath,results_folder)
     data.get_responses()
     data.info()
     data.split()

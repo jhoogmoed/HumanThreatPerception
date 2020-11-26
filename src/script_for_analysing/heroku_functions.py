@@ -7,14 +7,15 @@ import numpy as np
 import pandas as pd
 
 class heroku:
-    def __init__(self, jsonFile):
+    def __init__(self, jsonFile,results_folder):
+        self.results_folder = results_folder
         self.jsonFile = jsonFile
         
         # Set total number of stimuli in pool
         self.total_stimuli_number = 210
 
         # Open json file 
-        f = open(jsonFile, 'r')
+        f = open(self.results_folder + jsonFile, 'r')
         self.data = f.readlines()
         f.close()       
         
@@ -83,11 +84,12 @@ class heroku:
             
     def makeCSV(self):
         heroku_name = self.jsonFile.split('.')[0]
-        self.heroku_data.to_csv(heroku_name + '_responses.csv')
-        return heroku_name + '_responses.csv'
+        self.heroku_data.to_csv(self.results_folder + heroku_name + '_responses.csv')
+        return self.results_folder + heroku_name + '_responses.csv'
         
 
 if __name__ == "__main__":
+    results_folder   ='/home/jim/HDDocuments/university/master/thesis/results/'
     herokuFile   = 'entries_1.json'
-    h = heroku(herokuFile)
+    h = heroku(herokuFile,results_folder)
     h.makeCSV()

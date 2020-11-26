@@ -37,6 +37,7 @@ class image_parser:
         self.dataPath               = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
         # self.drive                  = '/city/2011_09_26_drive_0093_sync'
         self.drive                  = '/test_images'
+        self.results_folder         = '/home/jim/HDDocuments/university/master/thesis/results'
 
         # Check if exists
         if(not os.path.exists(self.dataPath+self.drive)):
@@ -75,10 +76,10 @@ class image_parser:
         
         # Setup data acquisition
         try:
-            os.remove(os.path.join(self.dataPath,'model_results.csv'))
+            os.remove(os.path.join(self.results_folder,'model_results.csv'))
         except:         
             pass   
-        self.csvFile = open(os.path.join(self.dataPath,'model_results.csv'),'a')
+        self.csvFile = open(os.path.join(self.results_folder,'model_results.csv'),'a')
         self.csvFile.write('Frame number,Combination parameter,Type parameter,Imminence parameter,Probability parameter\n')
          
         #Initiation of functions

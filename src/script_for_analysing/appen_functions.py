@@ -3,9 +3,10 @@
 import pandas as pd
 
 class appen:
-    def __init__(self, csvFile):
+    def __init__(self, csvFile, results_folder):
         self.csvFile = csvFile
-        self.appen_data = pd.read_csv(csvFile)
+        self.results_folder = results_folder
+        self.appen_data = pd.read_csv(self.results_folder + csvFile)
         
         
     def find_cheaters(self, column_type = 'standard'):
@@ -29,12 +30,13 @@ class appen:
     
     def makeCSV(self):
         appen_name = self.csvFile.split('.')[0]
-        self.unique_appen_data.to_csv(appen_name + '_unique.csv')
-        self.cheater_appen_data.to_csv(appen_name + '_cheaters.csv')
-        return appen_name + '_unique.csv', appen_name + '_cheaters.csv'
+        self.unique_appen_data.to_csv(self.results_folder + appen_name + '_unique.csv')
+        self.cheater_appen_data.to_csv(self.results_folder + appen_name + '_cheaters.csv')
+        return self.results_folder + appen_name + '_unique.csv', appen_name + '_cheaters.csv'
         
 if __name__ == "__main__":
-    appenFile   = 'f1669822.csv'
-    a = appen(appenFile)
+    results_folder   ='/home/jim/HDDocuments/university/master/thesis/results/'
+    appenFile   ='f1669822.csv'
+    a = appen(results_folder,appenFile)
     a.find_cheaters('daniel')
     a.makeCSV()

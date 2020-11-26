@@ -9,10 +9,12 @@ from appen_functions import *
 # Set name of heroku and appen file
 herokuFile  = 'entries_1.json'
 appenFile   = 'f1669822.csv'
+results_folder   ='/home/jim/HDDocuments/university/master/thesis/results/'
+
 
 # Create heroku and appen class
-h = heroku(herokuFile)
-a = appen(appenFile)
+h = heroku(herokuFile,results_folder)
+a = appen(appenFile,results_folder)
 
 # Find cheaters
 a.find_cheaters('daniel') #'daniel' format or 'standard'
@@ -39,7 +41,7 @@ for key in merge_data.keys():
         del merge_data[key]
 
 # Save merged DataFrame as CSV
-merge_data.to_csv('merged_data.csv')
+merge_data.to_csv(results_folder + 'merged_data.csv')
 print('There are %s unique responses' %len(merge_data))
 
 
