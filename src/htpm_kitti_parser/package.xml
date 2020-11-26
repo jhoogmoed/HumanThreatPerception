@@ -1,0 +1,21 @@
+<package format="2">
+  <name>htpm_kitti_parser</name>
+  <version>0.0.2</version>
+  <description>
+  This package provides parsing of KITTI synced and rectified data
+  </description>
+  <license>Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0) </license>
+  <maintainer email="28733969+jhoogmoed@users.noreply.github.com">jhoogmoed</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>roslaunch</build_depend>
+  
+  <exec_depend>message_runtime</exec_depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+</package>
