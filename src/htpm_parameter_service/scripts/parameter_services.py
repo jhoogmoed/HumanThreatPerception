@@ -8,7 +8,7 @@ import numpy as np
 from std_msgs.msg import String
 
 from htpm_parameter_service.srv import Stype, Simm, Sprob
-from htpm_parameter_service.msg import msg_kitti_object, msg_kitti_object_list, msg_kitti_oxts
+from htpm_parameter_service.msg import msg_kitti_object,  msg_kitti_oxts
 
 from std_msgs.msg import Float32
 from std_msgs.msg import Bool
@@ -92,9 +92,9 @@ class kitti_parser():
         
     def get_probability(self):
         rospy.wait_for_service('parameter/probability')
-        get_type = rospy.ServiceProxy('parameter/probability', Sprob)
+        get_prob = rospy.ServiceProxy('parameter/probability', Sprob)
         try:
-            resp = get_type(self.road_type)
+            resp = get_prob(self.road_type)
             self.par_probability = resp.par
         except rospy.ServiceException as exc:
             print("Service did not process request: " + str(exc))
@@ -114,11 +114,14 @@ class kitti_parser():
             # Get parameter values from info
             self.get_type()
             self.get_imminence()
-            # self.get_probability()
-            # print(self.par_probability)
-            # Combine parameters
-            # par_combi = self.par_type + self.par_imminence + self.par_probability
+            self.get_probability()
             
+            # Combine parameters
+            self.par_combi = self.par_type + self.par_imminence + self.par_probability
+            
+            # Save to csv file
+            self.csvFile.write(str(self.frame) + ',' + str(self.par_combi) + ',' + str(self.par_type) + ',' + str(self.par_imminence) + ',' + str(self.par_probability) +'\n')
+        
             # Loop through frames
             self.frame = self.frame+1  
             
