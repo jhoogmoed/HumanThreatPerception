@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(htpm_kitti_parser)
+project(htpm_parameter_service)
 find_package(catkin REQUIRED COMPONENTS
   roslaunch
   roscpp 
@@ -11,11 +11,15 @@ find_package(catkin REQUIRED COMPONENTS
 
 roslaunch_add_file_check(launch)
 
-
 add_message_files( FILES 
   msg_kitti_object.msg
   msg_kitti_object_list.msg
   msg_kitti_oxts.msg
+)
+
+add_service_files(
+  FILES
+  Stype.srv
 )
 
 generate_messages(DEPENDENCIES 
@@ -29,6 +33,8 @@ catkin_package(CATKIN_DEPENDS
   roscpp rospy 
   std_msgs 
   geometry_msgs 
-  sensor_msgs)
+  sensor_msgs
+  )
+
 
 

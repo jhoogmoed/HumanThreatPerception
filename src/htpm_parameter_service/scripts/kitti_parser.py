@@ -5,7 +5,7 @@ import sys
 import os
 
 # import select
-# import roslib
+import roslib
 import rospy
 import cv2
 import time
@@ -101,11 +101,28 @@ class image_parser:
             
             
     def init_publishers(self):
-        pass
+        # Camera publishers
+        self.left_color_image_pub = rospy.Publisher('htpm/left_color', Image, queue_size = 1) 		
+        	
+        # Object publisher
+        self.objects_pub = rospy.Publisher('htpm/objects', msg_kitti_object_list , queue_size = 1) 	      
+        
+        # IMU publisher
+        self.imu_pub = rospy.Publisher('htpm/imu', msg_kitti_oxts, queue_size = 1)	
+        
+        # Road type publisher
+        self.road_pub = rospy.Publisher('htpm/road', msg_road, queue_size=1)
+        
+        # Master switch
+        self.master_pub = rospy.Publisher('htpm/master',Bool, queue_size = 1)
         
         
     def init_subscribers(self):
-        pass
+        self.combi_frame    = -1
+        self.combi_sub      = rospy.Subscriber('htpm/parameters/combi', msg_par, self.callback_par_combi)	
+        self.type_sub       = rospy.Subscriber('htpm/parameters/type', msg_par, self.callback_par_type)
+        self.imminence_sub  = rospy.Subscriber('htpm/parameters/imminence', msg_par, self.callback_par_imminence)
+        self.probability_sub  = rospy.Subscriber('htpm/parameters/probability', msg_par, self.callback_par_probability)
 
         
     def init_ros(self):
