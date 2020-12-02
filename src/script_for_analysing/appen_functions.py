@@ -6,7 +6,7 @@ class appen:
     def __init__(self, csvFile, results_folder):
         self.csvFile = csvFile
         self.results_folder = results_folder
-        self.appen_data = pd.read_csv(self.results_folder + csvFile)
+        self.appen_data = pd.read_csv(self.results_folder + 'online_data/' + csvFile)
         
         
     def find_cheaters(self, column_type = 'standard'):
@@ -30,9 +30,9 @@ class appen:
     
     def makeCSV(self):
         appen_name = self.csvFile.split('.')[0]
-        self.unique_appen_data.to_csv(self.results_folder + appen_name + '_unique.csv')
-        self.cheater_appen_data.to_csv(self.results_folder + appen_name + '_cheaters.csv')
-        return self.results_folder + appen_name + '_unique.csv', appen_name + '_cheaters.csv'
+        self.unique_appen_data.to_csv(self.results_folder + 'filtered_responses/' + appen_name + '_unique.csv')
+        self.cheater_appen_data.to_csv(self.results_folder + 'filtered_responses/' + appen_name + '_cheaters.csv')
+        return self.results_folder + 'filtered_responses/' + appen_name + '_unique.csv', appen_name + '_cheaters.csv'
         
 if __name__ == "__main__":
     results_folder   ='/home/jim/HDDocuments/university/master/thesis/results/'

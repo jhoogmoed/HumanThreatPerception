@@ -42,9 +42,9 @@ class par_probability:
     def callback(self,data):
         road_type = data.road
         if road_type == 'city':
-            probability_par = 10
+            probability_par = 3
         elif road_type == 'residential':     
-            probability_par = 5
+            probability_par = 1.5
         elif road_type == 'road':
             probability_par = 0
         else:

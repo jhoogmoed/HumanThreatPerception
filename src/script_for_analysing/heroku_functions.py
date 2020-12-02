@@ -15,7 +15,7 @@ class heroku:
         self.total_stimuli_number = 210
 
         # Open json file 
-        f = open(self.results_folder + jsonFile, 'r')
+        f = open(self.results_folder + 'online_data/' + jsonFile, 'r')
         self.data = f.readlines()
         f.close()       
         
@@ -84,8 +84,8 @@ class heroku:
             
     def makeCSV(self):
         heroku_name = self.jsonFile.split('.')[0]
-        self.heroku_data.to_csv(self.results_folder + heroku_name + '_responses.csv')
-        return self.results_folder + heroku_name + '_responses.csv'
+        self.heroku_data.to_csv(self.results_folder + 'filtered_responses/' + heroku_name + '_responses.csv')
+        return self.results_folder + 'filtered_responses/' + heroku_name + '_responses.csv'
         
 
 if __name__ == "__main__":

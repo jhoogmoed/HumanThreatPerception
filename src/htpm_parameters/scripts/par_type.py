@@ -18,13 +18,13 @@ from std_msgs.msg import Bool
 def typeSwitch(objType):
     # Switch to type to assign weight based on...
     typeSwitch = {
-    'Car'   : .4,
+    'Car'   : .2,
     'Van'   : .4,
     'Truck' :.6,
     'Pedestrian': 1,
     'Person_sitting': .2,
     'Cyclist': 1,
-    'Tram': .8,
+    'Tram': .6,
     'Misc': .2,
     'DontCare': 0,
     }

@@ -41,7 +41,7 @@ for key in merge_data.keys():
         del merge_data[key]
 
 # Save merged DataFrame as CSV
-merge_data.to_csv(results_folder + 'merged_data.csv')
+merge_data.to_csv(results_folder + 'filtered_responses/' + 'merged_data.csv')
 print('There are %s unique responses' %len(merge_data))
 
 

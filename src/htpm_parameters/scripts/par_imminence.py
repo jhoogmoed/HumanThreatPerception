@@ -77,15 +77,15 @@ class par_imminence:
             if time_headway > 5:
                 imminence_par = 0
             elif time_headway > 4:
-                imminence_par = 1
+                imminence_par = 0.1
             elif time_headway > 3:
-                imminence_par = 2
+                imminence_par = 0.5
             elif time_headway > 2:
-                imminence_par = 3
+                imminence_par = 1
             elif time_headway > 1:
-                imminence_par = 4
+                imminence_par = 2
             elif time_headway > 0:
-                imminence_par = 5
+                imminence_par = 3
             else:
                 imminence_par = 0
                 

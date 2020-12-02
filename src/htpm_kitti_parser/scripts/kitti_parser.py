@@ -76,10 +76,10 @@ class image_parser:
         
         # Setup data acquisition
         try:
-            os.remove(os.path.join(self.results_folder,'model_results.csv'))
+            os.remove(os.path.join(self.results_folder,'model_responses/model_results.csv'))
         except:         
             pass   
-        self.csvFile = open(os.path.join(self.results_folder,'model_results.csv'),'a')
+        self.csvFile = open(os.path.join(self.results_folder,'model_responses/model_results.csv'),'a')
         self.csvFile.write('Frame number,Combination parameter,Type parameter,Imminence parameter,Probability parameter\n')
          
         #Initiation of functions
