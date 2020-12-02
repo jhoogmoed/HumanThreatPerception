@@ -1,0 +1,6 @@
+msg_kitti_object[] objects
+geometry_msgs/Quaternion location
+geometry_msgs/Vector3 linear_velocity
+geometry_msgs/Vector3 linear_acceleration
+---
+float32 par

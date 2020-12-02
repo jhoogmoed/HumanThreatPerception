@@ -7,7 +7,7 @@ import numpy as np
 # Import specific ros
 from std_msgs.msg import String
 
-from htpm_parameter_service.srv import Stype
+from htpm_parameter_service.srv import Stype, Simm, Sprob
 from htpm_parameter_service.msg import msg_kitti_object, msg_kitti_object_list, msg_kitti_oxts
 
 from std_msgs.msg import Float32
@@ -80,7 +80,25 @@ class kitti_parser():
             self.par_type = resp.par
         except rospy.ServiceException as exc:
             print("Service did not process request: " + str(exc))
+            
+    def get_imminence(self):
+        rospy.wait_for_service('parameter/imminence')
+        get_imminence = rospy.ServiceProxy('parameter/imminence', Simm)
+        try:
+            resp = get_imminence(self.objects_msg,self.imu_msg.location,self.imu_msg.linear_velocity,self.imu_msg.linear_acceleration)
+            self.par_imminence = resp.par
+        except rospy.ServiceException as exc:
+            print("Service did not process request: " + str(exc))
         
+    def get_probability(self):
+        rospy.wait_for_service('parameter/probability')
+        get_type = rospy.ServiceProxy('parameter/probability', Sprob)
+        try:
+            resp = get_type(self.road_type)
+            self.par_probability = resp.par
+        except rospy.ServiceException as exc:
+            print("Service did not process request: " + str(exc))
+            
     def parameter_server(self):
         # Open results file
         self.csvFile    = open(os.path.join(self.results_folder, 'model_responses/model_results.csv'), 'a')
@@ -91,14 +109,15 @@ class kitti_parser():
             # Get information 
             self.get_objects()
             self.get_imu()
+            self.get_road()
             
             # Get parameter values from info
             self.get_type()
-            # self.get_imminence()
+            self.get_imminence()
             # self.get_probability()
-            
+            # print(self.par_probability)
             # Combine parameters
-            par_combi = self.par_type + self.par_imminence + self.par_probability
+            # par_combi = self.par_type + self.par_imminence + self.par_probability
             
             # Loop through frames
             self.frame = self.frame+1  
@@ -166,6 +185,10 @@ class kitti_parser():
         # Close file
         self.imu_file.close    
 
+    def get_road(self):
+        road_file  = open(self.dataPath + self.drive +'/uniform_image_list.txt', "r")
+        line = road_file.readlines()[self.frame]
+        self.road_type = line.split('/')[0]
 
 if __name__ == "__main__":
     kp = kitti_parser()
