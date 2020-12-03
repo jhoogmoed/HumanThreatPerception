@@ -47,20 +47,21 @@ class analyse:
         
         # Get mean and std of responses
         self.response_mean   = self.response_data.mean(skipna = True)
-        self.response_std    = self.response_data.std(skipna = True)
+        self.response_std    = self.response_data.std(skipna = True)  
     
-    
-    def find_outliers(self):
+    def find_outliers(self,thresh):
         # Find outliers
+        bad_indices = []
         for index in self.response_data.index:
-            print(self.response_data.index.mean(skipna = True))
+            if(self.response_data.loc[index].std(skipna = True)<thresh):
+                bad_indices.append(index)
+        self.response_data.pop(ba)
         
     def info(self):
         # Get general info on data
         self.data_description = self.response_data.describe()
         self.data_description.to_csv(self.results_folder + 'filtered_responses/' + 'self.data_description.csv')
         # print(self.data_description)
-
 
     def split(self):
         # Split data
@@ -103,8 +104,7 @@ class analyse:
 
         # d = {'single':self.single_response,'mean':self.response_mean}
         # df = pd.DataFrame(d)
-        # print(df)
-          
+        # print(df)      
 
     def model(self):
         # Get determinant of correlation
@@ -128,7 +128,6 @@ class analyse:
 
             plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')           
 
-    
     def risky_images(self):
         # Get most risky and least risky images
         response_mean_sorted = self.response_mean.sort_values()
@@ -146,20 +145,13 @@ class analyse:
             # os.path.join(self.dataPath + self.drive + '/image_02/data')
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'most_least_risky_images/' +'most_risky_%s.png' %i)
             i+=1
-            
-            
+                      
     def risk_ranking(self):
         response_mean_sorted = self.response_mean.sort_values()
         i = 0
         for image in response_mean_sorted.index:
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'risk_sorted_images/' + '%s.png' %i)
             i+=1
-        
-        
-
-
-        
-
 
     def PCA(self):
         images = os.listdir(self.dataPath + self.drive+ '/image_02/data/')
@@ -205,9 +197,9 @@ if __name__ == "__main__":
     
     data = analyse(dataPath,drive,mergedDataPath,modelDataPath,results_folder)
     data.get_responses()
+    # data.find_outliers(10)
     data.info()
     data.split()
-    data.find_outliers()
     data.model()
-    data.risky_images()
-    data.risk_ranking()
+    # data.risky_images()
+    # data.risk_ranking()

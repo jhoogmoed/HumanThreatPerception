@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 
 import os
 import rospy
@@ -126,6 +126,8 @@ class kitti_parser():
             self.frame = self.frame+1  
             
         self.csvFile.close
+
+        raise SystemExit
         
     def get_objects(self):
         # Open file

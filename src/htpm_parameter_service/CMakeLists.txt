@@ -13,7 +13,6 @@ roslaunch_add_file_check(launch)
 
 add_message_files( FILES 
   msg_kitti_object.msg
-  msg_kitti_object_list.msg
   msg_kitti_oxts.msg
 )
 
