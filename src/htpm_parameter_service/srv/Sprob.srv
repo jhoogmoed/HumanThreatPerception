@@ -1,3 +1,4 @@
 string road
+float32[] x
 ---
 float32 par

@@ -17,7 +17,7 @@ class analyse:
     def __init__(self,dataPath,drive,mergedDataPath,modelDataPath,results_folder):   
         # Docstring    
         "Class container for analysing functions."
-        
+        self.modelDataPath = modelDataPath
         # Set paths
         self.dataPath       = dataPath
         self.drive          = drive
@@ -25,9 +25,7 @@ class analyse:
 
         # Load data
         self.merge_data = pd.read_csv(self.results_folder + 'filtered_responses/' + mergedDataPath)
-        self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + modelDataPath)
-        
-    
+         
     def get_responses(self):
         # Get response per frame
         indices = []
@@ -107,26 +105,35 @@ class analyse:
         # print(df)      
 
     def model(self):
+        self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + self.modelDataPath)
+
         # Get determinant of correlation
-        for parameter in self.model_data.keys()[1::]:
+        parameter_keys = list(self.model_data)
+        parameter_keys.pop(0)
+        
+        for parameter in parameter_keys:
+            print(len(self.model_data[parameter]))
             self.r = self.model_data[parameter].corr(self.response_mean)
             self.r2 = self.r*self.r
             print('{:<30}'.format(parameter) + ': Model vs Human R^2 = %s' %self.r2)
             
-            plt.clf()
-            fig_mr = plt.errorbar(self.model_data[parameter], self.response_mean,self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-            plt.title("Model vs. responses " + parameter + " | R^2 = %s" %self.r2)
-            plt.xlabel("Model response")
-            plt.ylabel("Human response")
+            # plt.clf()
+            # fig_mr = plt.errorbar(self.model_data[parameter], self.response_mean,self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+            # plt.title("Model vs. responses " + parameter + " | R^2 = %s" %self.r2)
+            # plt.xlabel("Model response")
+            # plt.ylabel("Human response")
 
 
-            # Create linear fit of model and responses
-            linear_model = np.polyfit(self.model_data[parameter], self.response_mean, 1)
-            linear_model_fn = np.poly1d(linear_model)
-            x_s = np.arange(0, self.model_data[parameter].max())
-            fig_fl = plt.plot(x_s,linear_model_fn(x_s),color="green")
+            # # Create linear fit of model and responses
+            # linear_model = np.polyfit(self.model_data[parameter], self.response_mean, 1)
+            # linear_model_fn = np.poly1d(linear_model)
+            # x_s = np.arange(0, self.model_data[parameter].max())
+            # fig_fl = plt.plot(x_s,linear_model_fn(x_s),color="green")
 
-            plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')           
+            # plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')        
+        r = self.model_data[parameter_keys[0]].corr(self.response_mean)
+
+        return r*r
 
     def risky_images(self):
         # Get most risky and least risky images

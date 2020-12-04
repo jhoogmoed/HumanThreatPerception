@@ -9,30 +9,32 @@ from std_msgs.msg import String
 
 from htpm_parameter_service.srv import Stype
  
-def typeSwitch(objType):
+def typeSwitch(objType,parameters):
     # Switch to type to assign weight based on...
     typeSwitch = {
-    'Car'   : .2,
-    'Van'   : .4,
-    'Truck' :.6,
-    'Pedestrian': 1,
-    'Person_sitting': .2,
-    'Cyclist': 1,
-    'Tram': .6,
-    'Misc': .2,
-    'DontCare': 0,
+    'Car'           : parameters[0],
+    'Van'           : parameters[1],
+    'Truck'         : parameters[2],
+    'Pedestrian'    : parameters[3],
+    'Person_sitting': parameters[4],
+    'Cyclist'       : parameters[5],
+    'Tram'          : parameters[6],
+    'Misc'          : parameters[7],
+    'DontCare'      : parameters[8],
     }
     return typeSwitch.get(objType, "Invalid object type")
 
 def get_type(data):
+    print(data)
     objects = data.objects
+    parameters = data.x
     weight = []
     n = len(objects)
     for i in range(0,n):
         # print objects[i].type
         # print typeSwitch(objects[i].type)
         
-        weight.append(typeSwitch(objects[i].type))
+        weight.append(typeSwitch(objects[i].type,parameters))
     
     if weight == []:
         weightN = 0
