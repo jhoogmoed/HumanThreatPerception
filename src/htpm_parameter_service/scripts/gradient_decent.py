@@ -22,6 +22,8 @@ modelDataPath   = 'model_results.csv'
 # Get responses from participants
 data = analyse(dataPath,drive,mergedDataPath,modelDataPath,results_folder)
 data.get_responses()
+data.split()
+
 
 # Start values
 type_params = ['type/car',
@@ -33,16 +35,7 @@ type_params = ['type/car',
                'type/tram',
                'type/misc',
                'type/dc']
-# type_params_start = [0.2, 0.4, 0.6, 1, 0.2, 1, 0.4, 0, 0]
-type_params_start = [0.15685902,
-                     1.2939467,
-                     1.82245876,
-                     0.99936893,
-                     1.6379139,
-                     1.0,
-                     0.0,
-                     1.0,
-                     5.17585792]
+type_params_start = [0.2, 0.4, 0.6, 1, 0.2, 1, 0.4, 0, 0]
 
 prob_params = ['prob/road',
                'prob/city',
@@ -63,10 +56,10 @@ def get_correlation(x):
     results = pd.DataFrame(kp.parameter_server(x))
     
     print("Iteration %s" %i)
-    rc =  results['Combination parameter'].corr(data.response_mean)
-    rt =  results['Type parameter'].corr(data.response_mean)
-    rp =  results['Probability parameter'].corr(data.response_mean)
-    ri =  results['Imminence parameter'].corr(data.response_mean)
+    rc =  results['Combination parameter'].corr(data.response_mean_first)
+    rt =  results['Type parameter'].corr(data.response_mean_first)
+    rp =  results['Probability parameter'].corr(data.response_mean_first)
+    ri =  results['Imminence parameter'].corr(data.response_mean_first)
     
     
     print("Combination corr : %s" %(rc*rc))
@@ -75,22 +68,22 @@ def get_correlation(x):
     print("Imminence corr   : %s" %(ri*ri))
     
     i+=1
-    return 1-(rc )
+    return 1-(rc * rc)
 
 # Random first guess
-x0 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+# x0 = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 # x0 = type_params_start +prob_params_start +imm_params_start
 
-# First optimisation results
+# First optimisation results starting from all values 1
 # x0 = [ 0.78603735,  0.89275405,  0.97970909,  0.68928311,  0.64975938,
 #         0.83689267,  0.62785914,  0.74671845,  1.        ,  1.06649842,
 #         1.03987374,  0.89361434,  0.3830448 , -0.79077126]
 
 # Individual optimisation results
-# x0 = [0.24441526,  1.50570518,  2.52707192,  1.17821516,  1.83390363,  1.84680202,
-#       -1.2130232,   0.01693858,  1.,
-#       0.11087554,  0.09018137, -0.00105709,
-#       0.15939724, 0.01049802]
+x0 = [0.24441526,  1.50570518,  2.52707192,  1.17821516,  1.83390363,  1.84680202,
+      -1.2130232,   0.01693858,  1.,
+      0.11087554,  0.09018137, -0.00105709,
+      0.15939724, 0.01049802]
 
 
 #Broyden-Fletcher-Goldfarb-Shanno method
@@ -103,8 +96,28 @@ res = optimize.basinhopping(get_correlation, x0,minimizer_kwargs=minimizer_kwarg
 # Nelde Mead method
 # res = minimize(get_correlation,x0 ,method='Nelder-Mead',options={'disp': True})
 
+print("Parameters after optimisation")
 print(res.x)
+final_results = pd.DataFrame(kp.parameter_server(res.x))
+rc =  final_results['Combination parameter'].corr(data.response_mean_first)
+rt =  final_results['Type parameter'].corr(data.response_mean_first)
+rp =  final_results['Probability parameter'].corr(data.response_mean_first)
+ri =  final_results['Imminence parameter'].corr(data.response_mean_first)
 
+print("Correlation after optimisation")
+print("Combination corr : %s" %(rc*rc))
+print("Type corr        : %s" %(rt*rt))
+print("Probability corr : %s" %(rp*rp))
+print("Imminence corr   : %s" %(ri*ri))
 
-    
+second_results = pd.DataFrame(kp.parameter_server(res.x))
+rc =  second_results['Combination parameter'].corr(data.response_mean_last)
+rt =  second_results['Type parameter'].corr(data.response_mean_last)
+rp =  second_results['Probability parameter'].corr(data.response_mean_last)
+ri =  second_results['Imminence parameter'].corr(data.response_mean_last)
 
+print("Correlation with second half")
+print("Combination corr : %s" %(rc*rc))
+print("Type corr        : %s" %(rt*rt))
+print("Probability corr : %s" %(rp*rp))
+print("Imminence corr   : %s" %(ri*ri))

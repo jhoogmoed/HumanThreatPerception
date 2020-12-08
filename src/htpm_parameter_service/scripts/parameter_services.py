@@ -150,13 +150,21 @@ class kitti_parser():
         a = x[12]
         b = x[13]
         par_imm = []
-        for frame_objects in self.objects:
+        for frame in range(len(self.objects)):
             imms = []
-            for object in frame_objects:
-                distance = math.sqrt(object.location.x*object.location.x + 
-                                object.location.y*object.location.y + 
-                                object.location.z*object.location.z)
-                imm = a ** distance + b
+            velocity = math.sqrt(self.imus[frame].linear_velocity.x **2 +
+                                 self.imus[frame].linear_velocity.y **2 +
+                                 self.imus[frame].linear_velocity.z **2)
+            
+            for object in self.objects[frame]:
+                distance = math.sqrt(object.location.x ** 2+ 
+                                object.location.y ** 2 + 
+                                object.location.z ** 2)
+                
+                thw = distance / velocity
+                if thw>500:
+                    thw = 500
+                imm = a ** thw + b
                 imms.append(imm)
             par_imm.append(sum(imms))
         return par_imm
@@ -261,7 +269,7 @@ class kitti_parser():
             
             # Create new imu msg
             imu_msg         = msg_kitti_oxts()
-            imu_msg.frame   = self.frame
+            # imu_msg.frame   = self.frame
             line            = self.imu_file.readline() 
             imuArgs         = line.split(' ')
             imu_msg.location = Quaternion(
@@ -292,7 +300,8 @@ class kitti_parser():
 
 if __name__ == "__main__":
     kp = kitti_parser()
-    x = [ 0.44280227,  3.34705824,  5.76650168,  1.71872993, -1.05546119,
-        4.27986996, -3.84714484, -0.67921923, 18.11550273,  4.97899823,
-        4.1454334 ,  0.58620334, 19.83541916, 12.93964481, 13.93964481]
+    x = [ 0.78603735,  0.89275405,  0.97970909,  0.68928311,  0.64975938,
+         0.83689267,  0.62785914,  0.74671845,  1.        ,  1.06649842,
+         1.03987374,  0.89361434,  0.3830448 , -0.79077126]
     kp.parameter_server(x)
+ 

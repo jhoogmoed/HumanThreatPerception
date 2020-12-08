@@ -74,31 +74,31 @@ class analyse:
         self.response_mean_last   = self.response_data_last.mean(skipna = True)
         self.response_std_last    = self.response_data_last.std(skipna = True)
 
-        r_fl = self.response_mean_first.corr(self.response_mean_last)
-        r2_fl = r_fl*r_fl
-        print('{:<30}'.format('Autocorrelation') + ': 1Half vs 2Half R^2 = %s' %r2_fl)
+        # r_fl = self.response_mean_first.corr(self.response_mean_last)
+        # r2_fl = r_fl*r_fl
+        # print('{:<30}'.format('Autocorrelation') + ': 1Half vs 2Half R^2 = %s' %r2_fl)
 
-        fig_fl = plt.errorbar(self.response_mean_first, self.response_mean_last, self.response_std_first,self.response_std_last,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-        plt.title("First half vs. Last half | R^2 = %s" %r2_fl)
-        plt.xlabel("First half")
-        plt.ylabel("Second half")
-        plt.savefig(self.results_folder + 'correlation_images/' + 'first_half_vs_last_half.png')
+        # fig_fl = plt.errorbar(self.response_mean_first, self.response_mean_last, self.response_std_first,self.response_std_last,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+        # plt.title("First half vs. Last half | R^2 = %s" %r2_fl)
+        # plt.xlabel("First half")
+        # plt.ylabel("Second half")
+        # plt.savefig(self.results_folder + 'correlation_images/' + 'first_half_vs_last_half.png')
         
         # Random person R^2
-        random_person = random.randrange(0,len(self.response_data),1)
-        self.single_response = self.response_data.iloc[random_person]
+        # random_person = random.randrange(0,len(self.response_data),1)
+        # self.single_response = self.response_data.iloc[random_person]
         
-        r_sm = self.single_response.corr(self.response_mean)
-        r2_sm = r_sm*r_sm
-        print('{:<30}'.format('Single random') + ': N' + '{:<4}'.format(str(random_person)) +  " vs Human R^2 = " + str(r2_sm))            
+        # r_sm = self.single_response.corr(self.response_mean)
+        # r2_sm = r_sm*r_sm
+        # print('{:<30}'.format('Single random') + ': N' + '{:<4}'.format(str(random_person)) +  " vs Human R^2 = " + str(r2_sm))            
         
-        plt.clf()
-        fig_sm = plt.errorbar(self.single_response, self.response_mean, self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+        # plt.clf()
+        # fig_sm = plt.errorbar(self.single_response, self.response_mean, self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
 
-        plt.title("Single random " + str(random_person) + " vs. Mean responses | R^2 = %s" %r2_sm)
-        plt.xlabel("Single random person")
-        plt.ylabel("Mean responses")
-        plt.savefig(self.results_folder + 'correlation_images/' + 'single_vs_mean.png')
+        # plt.title("Single random " + str(random_person) + " vs. Mean responses | R^2 = %s" %r2_sm)
+        # plt.xlabel("Single random person")
+        # plt.ylabel("Mean responses")
+        # plt.savefig(self.results_folder + 'correlation_images/' + 'single_vs_mean.png')
 
         # d = {'single':self.single_response,'mean':self.response_mean}
         # df = pd.DataFrame(d)
