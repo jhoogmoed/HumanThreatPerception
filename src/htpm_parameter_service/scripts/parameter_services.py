@@ -76,7 +76,6 @@ class kitti_parser():
         self.get_objects()
         self.get_imu()
 
-        
     def sorter(self, name):
         frame = int(name.split('.')[0])
         return frame
@@ -148,15 +147,18 @@ class kitti_parser():
         return par_type
     
     def fast_imm(self,x):
+        a = x[12]
+        b = x[13]
         par_imm = []
         for frame_objects in self.objects:
-            distances = []
+            imms = []
             for object in frame_objects:
                 distance = math.sqrt(object.location.x*object.location.x + 
                                 object.location.y*object.location.y + 
                                 object.location.z*object.location.z)
-                distances.append(distance)
-            par_imm.append(sum(distances))
+                imm = a ** distance + b
+                imms.append(imm)
+            par_imm.append(sum(imms))
         return par_imm
     
     def fast_prob(self,x):

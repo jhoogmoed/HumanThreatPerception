@@ -15,6 +15,8 @@ dataPath        = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_
 drive           = '/test_images'
 results_folder  = '/home/jim/HDDocuments/university/master/thesis/results/'
 mergedDataPath  = 'merged_data.csv'
+# firstDataPath   = 
+# lastDataPath    =
 modelDataPath   = 'model_results.csv'
 
 # Get responses from participants
@@ -50,7 +52,7 @@ prob_params_start = [0.0,2.0,2.0]
 imm_params = ['imm/gain', 
               'imm/bias',
               'imm/max']
-imm_params_start = [1,0,1]
+imm_params_start = [0.5,0]
 
 param_names = type_params + prob_params +imm_params
 i = 0
@@ -73,20 +75,35 @@ def get_correlation(x):
     print("Imminence corr   : %s" %(ri*ri))
     
     i+=1
-    return 1-(rc * rc)
+    return 1-(rc )
+
+# Random first guess
+x0 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+# x0 = type_params_start +prob_params_start +imm_params_start
+
+# First optimisation results
+# x0 = [ 0.78603735,  0.89275405,  0.97970909,  0.68928311,  0.64975938,
+#         0.83689267,  0.62785914,  0.74671845,  1.        ,  1.06649842,
+#         1.03987374,  0.89361434,  0.3830448 , -0.79077126]
+
+# Individual optimisation results
+# x0 = [0.24441526,  1.50570518,  2.52707192,  1.17821516,  1.83390363,  1.84680202,
+#       -1.2130232,   0.01693858,  1.,
+#       0.11087554,  0.09018137, -0.00105709,
+#       0.15939724, 0.01049802]
 
 
-x0 = type_params_start +prob_params_start +imm_params_start
-x0 = np.array(x0)
-# x0 = [ 0.44280227,  3.34705824,  5.76650168,  1.71872993, -1.05546119,
-#         4.27986996, -3.84714484, -0.67921923, 18.11550273,  4.97899823,
-#         4.1454334 ,  0.58620334, 19.83541916, 12.93964481, 13.93964481]
-    
-res = minimize(get_correlation, x0, method='BFGS',options={'disp': True,'xtol': 0.000001})
-# res = optimize.basinhopping(get_correlation, x0)
+#Broyden-Fletcher-Goldfarb-Shanno method
+# res = minimize(get_correlation, x0, method='BFGS',options={'disp': True,'xtol': 0.00000001})
+
+# Basinhopper method
+minimizer_kwargs = {"method": "BFGS"}
+res = optimize.basinhopping(get_correlation, x0,minimizer_kwargs=minimizer_kwargs)
+
+# Nelde Mead method
 # res = minimize(get_correlation,x0 ,method='Nelder-Mead',options={'disp': True})
 
-print(res)
+print(res.x)
 
 
     
