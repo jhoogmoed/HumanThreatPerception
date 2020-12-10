@@ -144,20 +144,21 @@ class kitti_parser():
                     smallest_distance = distance
                     smallest_velocity = velocity
                 
-            # Calculate time headway per vehicle
-            thw = smallest_distance / smallest_velocity
-        
-            #Linear imminence parameter
-            # imm =  a * thw +b
-            
-            # Quadratic imminence parameter
-            # if thw>100:
-            #     thw = 100
-            if thw<0:
-                thw = 0
-            imm = a*thw**(1/b)
-            # imm = math.exp(-(thw*a)) + b
-            imms.append(imm)
+                # Calculate time headway per vehicle
+                smallest_thw = smallest_distance / smallest_velocity
+                thw = distance / velocity
+                
+                # Throw out weird data if present
+                if thw<0:
+                    thw = 0
+                
+                #Linear imminence parameter
+                # imm =  a * thw + b
+                
+                # Quadratic imminence parameter
+                imm = a*thw**(1/b)
+
+                imms.append(imm)
             par_imm.append(sum(imms))
         return par_imm
     

@@ -75,10 +75,14 @@ bnds  = ((0, 10),(0, 10),(0,10),(0, 10),(0, 10),
            (0, 10),(0, 10),(0, 10),
            (0, 10),(None, None))
 
+# bnds  = ((0, 1),(0, 1),(0,1),(0, 1),(0, 1),
+#            (0, 1),(0, 1),(0, 1),(0, 1),
+#            (0, 1),(0, 1),(0, 1),
+#            (0, 1),(-1, 1))
 
 
 #Broyden-Fletcher-Goldfarb-Shanno method
-res = minimize(get_correlation, params.values(), method='L-BFGS-B',bounds=bnds,options={'disp': True, 'maxfun': 1000}) # 
+res = minimize(get_correlation, params.values(), method='TNC',bounds=bnds,options={'disp': True, 'maxfun': 1000}) # 
 
 # Basinhopper method
 # class MyBounds(object):
@@ -95,11 +99,15 @@ res = minimize(get_correlation, params.values(), method='L-BFGS-B',bounds=bnds,o
 #         return tmax and tmin
     
 # mybounds = MyBounds()
-# minimizer_kwargs = {"method": "BFGS"}
-# res = optimize.basinhopping(get_correlation, x0,minimizer_kwargs=minimizer_kwargs,disp=True)#accept_test=mybounds,
+# minimizer_kwargs = {"method": "L-BFGS-B"}
+# res = optimize.basinhopping(get_correlation, params.values(),accept_test=mybounds,disp=True)#minimizer_kwargs=minimizer_kwargs,
 
 # Nelde Mead method
 # res = minimize(get_correlation,params.values() ,method='Nelder-Mead',options={'disp': True})
+
+# SHGO
+# minimizer_kwargs = {"method": "L-BFGS-B"}
+# res = optimize.shgo(get_correlation,bnds,minimizer_kwargs=minimizer_kwargs,options={'disp': True})
 
 # Print parameters
 print("Parameters after optimisation")
