@@ -1,6 +1,0 @@
-<launch>
-	<node pkg="htpm_parameter_service" name="imminence_server" type="imminence_server.py" output="screen" /> 
-	<node pkg="htpm_parameter_service" name="type_server" type="type_server.py" output="screen" /> 
-	<node pkg="htpm_parameter_service" name="probability_server" type="probability_server.py" output="screen" /> 
-	<node pkg="htpm_parameter_service" name="parameter_services" type="parameter_services.py" output="screen" /> 
-</launch>

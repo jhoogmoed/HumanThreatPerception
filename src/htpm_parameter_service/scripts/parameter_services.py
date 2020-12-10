@@ -76,42 +76,9 @@ class kitti_parser():
         self.get_objects()
         self.get_imu()
 
-    def sorter(self, name):
+    def sorter(self,name):
         frame = int(name.split('.')[0])
         return frame
-    
-    def get_type(self,x):
-        rospy.wait_for_service('parameter/type')
-        get_type = rospy.ServiceProxy('parameter/type', Stype)
-        try:
-            resp = get_type(self.objects[self.frame],x)
-            par_type = resp.par
-        except rospy.ServiceException as exc:
-            print("Service did not process request: " + str(exc))
-        return par_type       
-            
-    def get_imminence(self,x):
-        rospy.wait_for_service('parameter/imminence')
-        get_imminence = rospy.ServiceProxy('parameter/imminence', Simm)
-        try:
-            resp = get_imminence(self.objects[self.frame],
-                                 self.imus[self.frame].location,
-                                 self.imus[self.frame].linear_velocity,
-                                 self.imus[self.frame].linear_acceleration,x)
-            par_imminence = resp.par
-        except rospy.ServiceException as exc:
-            print("Service did not process request: " + str(exc))
-        return par_imminence
-    
-    def get_probability(self,x):
-        rospy.wait_for_service('parameter/probability')
-        get_prob = rospy.ServiceProxy('parameter/probability', Sprob)
-        try:
-            resp = get_prob(self.road_types[self.frame],x)
-            par_probability = resp.par
-        except rospy.ServiceException as exc:
-            print("Service did not process request: " + str(exc))
-        return par_probability
     
     def typeSwitch(self,objType,parameters):
         # Switch to type to assign weight based on...
@@ -149,22 +116,43 @@ class kitti_parser():
     def fast_imm(self,x):
         a = x[12]
         b = x[13]
-        par_imm = []
+        par_total_distance      = []
+        par_closest_distance    = []
+        par_velocity            = []
+        par_imm                 = []
+              
+        # Get object and ego vehicle data per frame   
         for frame in range(len(self.objects)):
-            imms = []
+            # Get ego velocity
             velocity = math.sqrt(self.imus[frame].linear_velocity.x **2 +
                                  self.imus[frame].linear_velocity.y **2 +
-                                 self.imus[frame].linear_velocity.z **2)
+                                 self.imus[frame].linear_velocity.z **2) 
             
+            # Save velocity parameter
+            par_velocity.append(velocity)  
+            
+            # Get object data per object in frame
+            imms = []
             for object in self.objects[frame]:
                 distance = math.sqrt(object.location.x ** 2+ 
                                 object.location.y ** 2 + 
                                 object.location.z ** 2)
                 
+                # Calculate time headway per vehicle
                 thw = distance / velocity
-                if thw>500:
-                    thw = 500
-                imm = a ** thw + b
+            
+                #Linear imminence parameter
+                # imm =  a * thw + b
+                
+                # Quadratic imminence parameter
+                if thw>100:
+                    thw = 100
+                elif thw<0.5:
+                    thw = 0.5
+                if a < 0:
+                    imm = np.nan
+                else:  
+                    imm = b *math.exp(-(a*thw)) 
                 imms.append(imm)
             par_imm.append(sum(imms))
         return par_imm
@@ -173,56 +161,9 @@ class kitti_parser():
         probability_par = []
         for road in self.road_types:
             probability_par.append(self.roadSwitch(road,x))
-            
-        
-                        
+          
         return probability_par
-
-    def parameter_server(self,x):
-        # Open results file
-        # self.csvFile    = open(os.path.join(self.results_folder, 'model_responses/model_results.csv'), 'a')
-        # self.csvFile.write('Frame number, Combination parameter, Type parameter, Imminence parameter, Probability parameter\n')
-        results = {'Frame number':[],
-                   'Combination parameter':[],
-                   'Type parameter':[],
-                   'Imminence parameter':[],
-                   'Probability parameter':[]}
-        par_imminence = self.fast_imm(x)
-        par_type      = self.fast_type(x)
-        par_probability = self.fast_prob(x)
-        
-        
-        # for self.frame in tqdm (range (len(self.left_color_image_list)), desc="Working on frames..."): 
-        # for self.frame in range(len(self.left_color_image_list)): 
-        #     # print('Working on frame:%s' %self.frame)  
-            
-        #     # Get parameter values from info
-        #     par_type = self.get_type(x)
-        #     par_imminence = self.get_imminence(x)
-        #     par_probability = self.get_probability(x)
-            
-        #     # Combine parameters
-        
-        
-        
-        par_combi = []
-        for i in range(len(par_imminence)):
-            par_combi.append(par_imminence[i]+ par_type[i] + par_probability[i])
-                    
-        # Update dict
-        results['Frame number'] = range(len(self.left_color_image_list))
-        results['Combination parameter'] = par_combi
-        results['Type parameter'] =par_type
-        results['Imminence parameter'] = par_imminence
-        results['Probability parameter'] = par_probability
-
-  
-            # Save to csv file
-            # self.csvFile.write(str(self.frame) + ',' + str(par_combi) + ',' + str(par_type) + ',' + str(par_imminence) + ',' + str(par_probability) +'\n')
-            
-        # self.csvFile.close
-        return results
-        
+    
     def get_objects(self):
         self.objects = []
         for i in range(len(self.objects_list)):
@@ -298,10 +239,65 @@ class kitti_parser():
         for i in range(len(lines)):
             self.road_types.append(lines[i].split('/')[0])
 
+    def get_model(self,x):        
+        results = {'Frame number':[],
+                   'Combination parameter':[],
+                   'Type parameter':[],
+                   'Imminence parameter':[],
+                   'Probability parameter':[]}
+        
+        # Get individual model results
+        par_imminence   = self.fast_imm(x)
+        par_type        = self.fast_type(x)
+        par_probability = self.fast_prob(x)     
+        
+        # Get combined model results
+        par_combi = []
+        for i in range(len(par_imminence)):
+            par_combi.append(par_imminence[i]+ par_type[i] + par_probability[i])
+                    
+        # Update dict
+        results['Frame number']             = range(len(self.left_color_image_list))
+        results['Combination parameter']    = par_combi
+        results['Type parameter']           = par_type
+        results['Imminence parameter']      = par_imminence
+        results['Probability parameter']    = par_probability
+
+  
+            
+        return results
+    
+    def save_model(self,x):  
+        # Open results file
+        csvFile    = open(os.path.join(self.results_folder, 'model_responses/model_results.csv'), 'a')
+        csvFile.write('Frame,Combi,Type,Imminence,Probabiltiy\n')
+        
+        # Get individual model results
+        par_imminence   = self.fast_imm(x)
+        par_type        = self.fast_type(x)
+        par_probability = self.fast_prob(x)     
+        
+        
+        # Get combined model results
+        par_combi = []
+        for frame in range(len(par_imminence)):
+            par_combi.append(par_imminence[frame]+ par_type[frame] + par_probability[frame])
+            
+            # Save to results file
+            csvFile.write(str(frame) + ',' + str(par_combi[frame]) + ',' + str(par_type[frame]) + ',' + str(par_imminence[frame]) + ',' + str(par_probability[frame]) +'\n')
+        
+        # Close results file
+        csvFile.close
+
+
 if __name__ == "__main__":
     kp = kitti_parser()
-    x = [ 0.78603735,  0.89275405,  0.97970909,  0.68928311,  0.64975938,
-         0.83689267,  0.62785914,  0.74671845,  1.        ,  1.06649842,
-         1.03987374,  0.89361434,  0.3830448 , -0.79077126]
-    kp.parameter_server(x)
- 
+    # x = [ 0.78603735,  0.89275405,  0.97970909,  0.68928311,  0.64975938,
+    #      0.83689267,  0.62785914,  0.74671845,  1.        ,  1.06649842,
+    #      1.03987374,  0.89361434,  0.3830448 , -0.79077126]
+    
+    x = [0.97249244, -0.73035007,  3.78233866,  1.71937009, 2.80132008,
+         0.13719511, -2.1247334, 0.11580047,  1.4249498,
+         0.12294739,  2.06632313, -0.75077797,
+         -0.19353087,  0.15254572]
+    kp.save_model(x)

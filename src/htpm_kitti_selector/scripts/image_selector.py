@@ -1,6 +1,5 @@
 # !/usr/bin/env python
 
-
 # Import main
 import os
 import random

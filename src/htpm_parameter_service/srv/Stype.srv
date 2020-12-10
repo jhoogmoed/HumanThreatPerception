@@ -1,4 +1,0 @@
-msg_kitti_object[] objects
-float32[] x
----
-float32 par
