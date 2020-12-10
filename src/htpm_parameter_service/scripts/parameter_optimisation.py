@@ -70,36 +70,36 @@ def get_corr(results,data_range,print_bool):
 x0 = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 # x0 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
-bnds  = ((0, None),(0, None),(0, None),(0, None),(0, None),
-           (0, None),(0, None),(0, None),(0, None),
-           (0, None),(0, None),(0, None),
-           (None, None),(None, None))
+bnds  = ((0, 10),(0, 10),(0,10),(0, 10),(0, 10),
+           (0, 10),(0, 10),(0, 10),(0, 10),
+           (0, 10),(0, 10),(0, 10),
+           (0, 10),(None, None))
 
 
 
 #Broyden-Fletcher-Goldfarb-Shanno method
-# res = minimize(get_correlation, x0, method='TNC',bounds=bnds,options={'disp': True})
+res = minimize(get_correlation, params.values(), method='L-BFGS-B',bounds=bnds,options={'disp': True, 'maxfun': 1000}) # 
 
 # Basinhopper method
-class MyBounds(object):
+# class MyBounds(object):
 
-    def __init__(self, xmax=[10,10,10,10,10,10,10,10,10,10,10,10,10,10],
-                 xmin=[0,0,0,0,0,0,0,0,0,0,0,0,0,-10]):
-        self.xmax = np.array(xmax)
-        self.xmin = np.array(xmin)
+#     def __init__(self, xmax=[10,10,10,10,10,10,10,10,10,10,10,10,10,10],
+#                  xmin=[0,0,0,0,0,0,0,0,0,0,0,0,-10,-10]):
+#         self.xmax = np.array(xmax)
+#         self.xmin = np.array(xmin)
 
-    def __call__(self, **kwargs):
-        x = kwargs["x_new"]
-        tmax = bool(np.all(x <= self.xmax))
-        tmin = bool(np.all(x >= self.xmin))
-        return tmax and tmin
+#     def __call__(self, **kwargs):
+#         x = kwargs["x_new"]
+#         tmax = bool(np.all(x <= self.xmax))
+#         tmin = bool(np.all(x >= self.xmin))
+#         return tmax and tmin
     
-mybounds = MyBounds()
-minimizer_kwargs = {"method": "BFGS"}
-res = optimize.basinhopping(get_correlation, x0, disp=True)#,accept_test=mybounds,disp=True)#,minimizer_kwargs=minimizer_kwargs)
+# mybounds = MyBounds()
+# minimizer_kwargs = {"method": "BFGS"}
+# res = optimize.basinhopping(get_correlation, x0,minimizer_kwargs=minimizer_kwargs,disp=True)#accept_test=mybounds,
 
 # Nelde Mead method
-# res = minimize(get_correlation,x0 ,method='Nelder-Mead',bounds=bnds,options={'disp': True})
+# res = minimize(get_correlation,params.values() ,method='Nelder-Mead',options={'disp': True})
 
 # Print parameters
 print("Parameters after optimisation")
@@ -116,4 +116,5 @@ get_corr(final_results,'first',True)
 print("Correlation second half (evaluation)")
 get_corr(final_results,'last',True)
 
-
+# Get images
+data.model()

@@ -133,27 +133,31 @@ class kitti_parser():
             
             # Get object data per object in frame
             imms = []
+            smallest_distance = 10000
+            smallest_velocity = 10000
             for object in self.objects[frame]:
+                
                 distance = math.sqrt(object.location.x ** 2+ 
                                 object.location.y ** 2 + 
                                 object.location.z ** 2)
+                if distance<smallest_distance:
+                    smallest_distance = distance
+                    smallest_velocity = velocity
                 
-                # Calculate time headway per vehicle
-                thw = distance / velocity
+            # Calculate time headway per vehicle
+            thw = smallest_distance / smallest_velocity
+        
+            #Linear imminence parameter
+            # imm =  a * thw +b
             
-                #Linear imminence parameter
-                # imm =  a * thw + b
-                
-                # Quadratic imminence parameter
-                if thw>100:
-                    thw = 100
-                elif thw<0.5:
-                    thw = 0.5
-                if a < 0:
-                    imm = np.nan
-                else:  
-                    imm = b *math.exp(-(a*thw)) 
-                imms.append(imm)
+            # Quadratic imminence parameter
+            # if thw>100:
+            #     thw = 100
+            if thw<0:
+                thw = 0
+            imm = a*thw**(1/b)
+            # imm = math.exp(-(thw*a)) + b
+            imms.append(imm)
             par_imm.append(sum(imms))
         return par_imm
     
@@ -262,9 +266,7 @@ class kitti_parser():
         results['Type parameter']           = par_type
         results['Imminence parameter']      = par_imminence
         results['Probability parameter']    = par_probability
-
   
-            
         return results
     
     def save_model(self,x):  

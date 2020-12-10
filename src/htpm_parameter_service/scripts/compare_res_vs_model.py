@@ -74,64 +74,64 @@ class analyse:
         self.response_mean_last   = self.response_data_last.mean(skipna = True)
         self.response_std_last    = self.response_data_last.std(skipna = True)
 
-        # r_fl = self.response_mean_first.corr(self.response_mean_last)
-        # r2_fl = r_fl*r_fl
-        # print('{:<30}'.format('Autocorrelation') + ': 1Half vs 2Half R^2 = %s' %r2_fl)
+        r_fl = self.response_mean_first.corr(self.response_mean_last)
+        r2_fl = r_fl*r_fl
+        print('{:<30}'.format('Autocorrelation') + ': 1Half vs 2Half R^2 = %s' %r2_fl)
 
-        # fig_fl = plt.errorbar(self.response_mean_first, self.response_mean_last, self.response_std_first,self.response_std_last,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-        # plt.title("First half vs. Last half | R^2 = %s" %r2_fl)
-        # plt.xlabel("First half")
-        # plt.ylabel("Second half")
-        # plt.savefig(self.results_folder + 'correlation_images/' + 'first_half_vs_last_half.png')
+        fig_fl = plt.errorbar(self.response_mean_first, self.response_mean_last, self.response_std_first,self.response_std_last,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+        plt.title("First half vs. Last half | R^2 = %s" %r2_fl)
+        plt.xlabel("First half")
+        plt.ylabel("Second half")
+        plt.savefig(self.results_folder + 'correlation_images/' + 'first_half_vs_last_half.png')
         
         # Random person R^2
-        # random_person = random.randrange(0,len(self.response_data),1)
-        # self.single_response = self.response_data.iloc[random_person]
+        random_person = random.randrange(0,len(self.response_data),1)
+        self.single_response = self.response_data.iloc[random_person]
         
-        # r_sm = self.single_response.corr(self.response_mean)
-        # r2_sm = r_sm*r_sm
-        # print('{:<30}'.format('Single random') + ': N' + '{:<4}'.format(str(random_person)) +  " vs Human R^2 = " + str(r2_sm))            
+        r_sm = self.single_response.corr(self.response_mean)
+        r2_sm = r_sm*r_sm
+        print('{:<30}'.format('Single random') + ': N' + '{:<4}'.format(str(random_person)) +  " vs Human R^2 = " + str(r2_sm))     
         
-        # plt.clf()
-        # fig_sm = plt.errorbar(self.single_response, self.response_mean, self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+         # Create linear fit of model and responses
+        # print(self.single_response)
+        # linear_model = np.polyfit(self.single_response, self.response_mean, 1)
+        # linear_model_fn = np.poly1d(linear_model)
+        # x_s = np.arange(self.single_response.min(), self.single_response.max())
+        # fig_fl = plt.plot(x_s,linear_model_fn(x_s),color="green")       
+        
+        plt.clf()
+        fig_sm = plt.errorbar(self.single_response, self.response_mean, self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
 
-        # plt.title("Single random " + str(random_person) + " vs. Mean responses | R^2 = %s" %r2_sm)
-        # plt.xlabel("Single random person")
-        # plt.ylabel("Mean responses")
-        # plt.savefig(self.results_folder + 'correlation_images/' + 'single_vs_mean.png')
+        plt.title("Single random " + str(random_person) + " vs. Mean responses | R^2 = %s" %r2_sm)
+        plt.xlabel("Single random person")
+        plt.ylabel("Mean responses")
+        plt.savefig(self.results_folder + 'correlation_images/' + 'single_vs_mean.png')
 
         # d = {'single':self.single_response,'mean':self.response_mean}
         # df = pd.DataFrame(d)
         # print(df)      
 
-    def model(self):
+    def model(self,plotBool=True):
         self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + self.modelDataPath)
 
         # Get determinant of correlation
-        parameter_keys = list(self.model_data)
-        parameter_keys.pop(0)
+        self.parameter_keys = list(self.model_data)
+        self.parameter_keys.pop(0)
         
-        for parameter in parameter_keys:
-            print(len(self.model_data[parameter]))
-            self.r = self.model_data[parameter].corr(self.response_mean)
-            self.r2 = self.r*self.r
+        for parameter in self.parameter_keys:
+            # Get correlation
+            self.r2 = self.model_data[parameter].corr(self.response_mean)**2
+            
+            # Print correlation
             print('{:<30}'.format(parameter) + ': Model vs Human R^2 = %s' %self.r2)
             
-            # plt.clf()
-            # fig_mr = plt.errorbar(self.model_data[parameter], self.response_mean,self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-            # plt.title("Model vs. responses " + parameter + " | R^2 = %s" %self.r2)
-            # plt.xlabel("Model response")
-            # plt.ylabel("Human response")
-
-
-            # # Create linear fit of model and responses
-            # linear_model = np.polyfit(self.model_data[parameter], self.response_mean, 1)
-            # linear_model_fn = np.poly1d(linear_model)
-            # x_s = np.arange(0, self.model_data[parameter].max())
-            # fig_fl = plt.plot(x_s,linear_model_fn(x_s),color="green")
-
-            # plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')        
-        r = self.model_data[parameter_keys[0]].corr(self.response_mean)
+            # Save figure correlation
+            if plotBool == True:
+                self.plot_correlation(self.model_data[parameter],self.response_mean,
+                                    [],self.response_std,
+                                    'Model','Response mean',parameter,self.r2)
+                 
+        r = self.model_data[self.parameter_keys[0]].corr(self.response_mean)
 
         return r*r
 
@@ -192,6 +192,36 @@ class analyse:
         # dataset = datasets.load_breast_cancer()
 
         # print(self.response_mean)
+    
+    def plot_correlation(self,series1,series2,
+                         std1 = [],
+                         std2 = [],
+                         name1 = 'Series 1', name2 = 'Series 2',
+                         parameter = 'Parameter',r2 = np.nan):
+        # Fill if empty errorbars
+        if len(std1)==0:
+            std1 = np.full(len(series1), np.nan)
+        if len(std2)==0:
+            std2 = np.full(len(series2), np.nan)
+        
+        # Plot errobar figure
+        plt.clf()
+        plt.errorbar(series1, series2,std2,std1,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+        plt.title(name1+ ' vs. ' + name2 + ' ' + parameter + " | R^2 = %s" %r2)
+        plt.xlabel(name1)
+        plt.ylabel(name2)
+
+
+        # Create linear fit of model and responses 
+        linear_model = np.polyfit(series1,series2, 1)
+        linear_model_fn = np.poly1d(linear_model)
+        x_s = np.arange(series1.min(), series1.max())
+        
+        # Plot linear fit
+        plt.plot(x_s,linear_model_fn(x_s),color="green")
+
+        # Save figure
+        plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')        
         
         
 
