@@ -1,3 +1,0 @@
-kitti
-model
-online

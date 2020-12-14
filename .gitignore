@@ -59,5 +59,6 @@ CATKIN_IGNORE
 # Custom
 *.bag
 .catkin_workspace
+*/egg-info
 
 

@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-from ast import copy_location
 import os
 import numpy as np
-import copy
-# from tqdm import tqdm
 import htpm_kitti.kitti.tracklet_parser as tracklet_parser
-import math
 import collections
 
 kittiObject = collections.namedtuple('kittiObject', ['type',

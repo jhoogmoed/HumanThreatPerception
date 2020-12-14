@@ -1,6 +1,0 @@
-README.md
-setup.py
-KittiHTPM.egg-info/PKG-INFO
-KittiHTPM.egg-info/SOURCES.txt
-KittiHTPM.egg-info/dependency_links.txt
-KittiHTPM.egg-info/top_level.txt
