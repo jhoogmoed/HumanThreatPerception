@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 parse XML files containing tracklet info for kitti data base (raw data section)
 (http://cvlibs.net/datasets/kitti/raw_data.php)
@@ -125,7 +125,7 @@ def parseXML(trackletFile):
 
   # convert tracklet XML data to a tree structure
   eTree = ElementTree()
-  print 'parsing tracklet file', trackletFile
+  print('parsing tracklet file', trackletFile)
   with open(trackletFile) as f:
     eTree.parse(f)
 
@@ -138,7 +138,7 @@ def parseXML(trackletFile):
     #print 'track:', trackletElem.tag
     if trackletElem.tag == 'count':
       nTracklets = int(trackletElem.text)
-      print 'file contains', nTracklets, 'tracklets'
+      print('file contains', nTracklets, 'tracklets')
     elif trackletElem.tag == 'item_version':
       pass
     elif trackletElem.tag == 'item':
@@ -258,7 +258,7 @@ def parseXML(trackletFile):
       raise ValueError('unexpected tracklet info')
   #end: for tracklet list items
 
-  print 'loaded', trackletIdx, 'tracklets'
+  print('loaded', trackletIdx, 'tracklets')
 
   # final consistency check
   if trackletIdx != nTracklets:
@@ -291,7 +291,7 @@ def example(kittiDir=None, drive=None):
 
   # loop over tracklets
   for iTracklet, tracklet in enumerate(tracklets):
-    print 'tracklet {0: 3d}: {1}'.format(iTracklet, tracklet)
+    print('tracklet {0: 3d}: {1}'.format(iTracklet, tracklet))
 
     # this part is inspired by kitti object development kit matlab code: computeBox3D
     h,w,l = tracklet.size

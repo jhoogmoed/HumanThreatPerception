@@ -1,5 +1,4 @@
-# !/usr/bin/env python
-
+# !/usr/bin/env python3
 import os
 import shutil
 import numpy as np
@@ -7,8 +6,6 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
-import cv2
 from pandas.core.frame import DataFrame
 from sklearn import decomposition, datasets
 from sklearn.preprocessing import StandardScaler
@@ -53,15 +50,23 @@ class analyse:
         for index in self.response_data.index:
             if(self.response_data.loc[index].std(skipna = True)<thresh):
                 bad_indices.append(index)
-        self.response_data.pop(ba)
+                self.response_data =self.response_data.drop(index)
         
     def info(self):
+        # Get mean and std of responses
+        self.response_mean   = self.response_data.mean(skipna = True)
+        self.response_std    = self.response_data.std(skipna = True)  
+        
         # Get general info on data
         self.data_description = self.response_data.describe()
         self.data_description.to_csv(self.results_folder + 'filtered_responses/' + 'self.data_description.csv')
         # print(self.data_description)
 
     def split(self):
+        # Get mean and std of responses
+        self.response_mean   = self.response_data.mean(skipna = True)
+        self.response_std    = self.response_data.std(skipna = True)  
+        
         # Split data
         middle = int(round(len(self.response_data)/2))
 
@@ -120,16 +125,16 @@ class analyse:
         
         for parameter in self.parameter_keys:
             # Get correlation
-            self.r2 = self.model_data[parameter].corr(self.response_mean)**2
+            r2 = self.model_data[parameter].corr(self.response_mean)**2
             
             # Print correlation
-            print('{:<30}'.format(parameter) + ': Model vs Human R^2 = %s' %self.r2)
+            print('{:<30}'.format(parameter) + ': Model vs Human R^2 = %s' %r2)
             
             # Save figure correlation
             if plotBool == True:
                 self.plot_correlation(self.model_data[parameter],self.response_mean,
-                                    [],self.response_std,
-                                    'Model','Response mean',parameter,self.r2)
+                                    None,self.response_std,
+                                    'Model','Response mean',parameter,r2)
                  
         r = self.model_data[self.parameter_keys[0]].corr(self.response_mean)
 
@@ -194,15 +199,10 @@ class analyse:
         # print(self.response_mean)
     
     def plot_correlation(self,series1,series2,
-                         std1 = [],
-                         std2 = [],
+                         std1 = None,
+                         std2 = None,
                          name1 = 'Series 1', name2 = 'Series 2',
                          parameter = 'Parameter',r2 = np.nan):
-        # Fill if empty errorbars
-        if len(std1)==0:
-            std1 = np.full(len(series1), np.nan)
-        if len(std2)==0:
-            std2 = np.full(len(series2), np.nan)
         
         # Plot errobar figure
         plt.clf()
@@ -211,7 +211,7 @@ class analyse:
         plt.xlabel(name1)
         plt.ylabel(name2)
 
-
+        
         # Create linear fit of model and responses 
         linear_model = np.polyfit(series1,series2, 1)
         linear_model_fn = np.poly1d(linear_model)
@@ -234,8 +234,12 @@ if __name__ == "__main__":
     
     data = analyse(dataPath,drive,mergedDataPath,modelDataPath,results_folder)
     data.get_responses()
-    # data.find_outliers(10)
     data.info()
+    data.split()
+    data.model()
+    print(len(data.response_data))
+    data.find_outliers(20)
+    print(len(data.response_data))
     data.split()
     data.model()
     # data.risky_images()

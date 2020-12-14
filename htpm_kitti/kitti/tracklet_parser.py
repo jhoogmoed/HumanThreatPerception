@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Import main
 import sys
@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 # Import select
-import parseTrackletXML as xmlParser
+import htpm_kitti.kitti.parseTrackletXML as xmlParser
 
 # -------------------------------------------
 def main(kittiDir,drive):
@@ -110,7 +110,10 @@ def main(kittiDir,drive):
         
 
 if __name__ == "__main__":
-    kittiDir    = sys.argv[1]
+    if len(sys.argv)>1:
+        kittiDir= sys.argv[1]
+    else:
+        kittiDir    = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26/'
     roadTypes   = ['road','city','residential']
     for i in range(0,len(roadTypes)):
         driveNames = sorted(os.listdir(os.path.join(kittiDir,roadTypes[i])))
