@@ -1,8 +1,0 @@
-<launch>
-	<node pkg="htpm_kitti_parser" name="kitti_parser" type="kitti_parser.py" output="screen" /> 
-	<node pkg="htpm_parameters" name="par_imminence" type="par_imminence.py" output="screen" /> 
-	<node pkg="htpm_parameters" name="htpm_parameters_probability" type="par_probability.py" output="screen" /> 
-	<node pkg="htpm_parameters" name="htpm_parameters_type" type="par_type.py" output="screen" /> 
-	<node pkg="htpm_parameters" name="htpm_parameters_combi" type="par_combi.py" output="screen" /> 
-	<!-- <node pkg="htpm_parameters" name="htpm_parameters_probability" type="par_probability.py" output="screen" />  -->
-</launch>

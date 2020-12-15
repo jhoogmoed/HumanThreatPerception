@@ -1,10 +1,10 @@
-# !/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from heroku_functions import *
-from appen_functions import *
+from herokuFunctions import *
+from appenFunctions import *
 
 # Set name of heroku and appen file
 herokuFile  = 'entries_1.json'

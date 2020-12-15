@@ -1,14 +1,12 @@
-# !/usr/bin/env python
-
+# !/usr/bin/env python3
 import os
 import shutil
 import numpy as np
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
-
-
 import cv2
+
 from pandas.core.frame import DataFrame
 from sklearn import decomposition, datasets
 from sklearn.preprocessing import StandardScaler
@@ -17,7 +15,7 @@ class analyse:
     def __init__(self,dataPath,drive,mergedDataPath,modelDataPath,results_folder):   
         # Docstring    
         "Class container for analysing functions."
-        
+        self.modelDataPath = modelDataPath
         # Set paths
         self.dataPath       = dataPath
         self.drive          = drive
@@ -25,9 +23,7 @@ class analyse:
 
         # Load data
         self.merge_data = pd.read_csv(self.results_folder + 'filtered_responses/' + mergedDataPath)
-        self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + modelDataPath)
-        
-    
+         
     def get_responses(self):
         # Get response per frame
         indices = []
@@ -47,88 +43,116 @@ class analyse:
         
         # Get mean and std of responses
         self.response_mean   = self.response_data.mean(skipna = True)
-        self.response_std    = self.response_data.std(skipna = True)
+        self.response_std    = self.response_data.std(skipna = True)  
+        
+        # Get normalized response
+        self.response_normal = (self.response_data-self.response_mean.mean())/self.response_std.mean()
+        
+        # Get researchers own responses
+        # self.response_own =      
     
-    
-    def find_outliers(self):
+    def find_outliers(self,thresh):
         # Find outliers
+        bad_indices = []
         for index in self.response_data.index:
-            print(self.response_data.index.mean(skipna = True))
+            if(self.response_data.loc[index].std(skipna = True)<thresh):
+                bad_indices.append(index)
+                self.response_data =self.response_data.drop(index)
         
     def info(self):
+        # Get mean and std of responses
+        self.response_mean   = self.response_data.mean(skipna = True)
+        self.response_std    = self.response_data.std(skipna = True)  
+        
         # Get general info on data
         self.data_description = self.response_data.describe()
         self.data_description.to_csv(self.results_folder + 'filtered_responses/' + 'self.data_description.csv')
         # print(self.data_description)
 
-
-    def split(self):
-        # Split data
+    def split(self,useNorm = False):
+        # Chose usage of normalized data
+        if useNorm == True:
+            data = self.response_normal 
+        else:
+            data = self.response_data
+        
+        # Get mean and std of responses
+        self.response_mean   = data.mean(skipna = True)
+        self.response_std    = data.std(skipna = True) 
+        
+        # Find middle
         middle = int(round(len(self.response_data)/2))
 
-        self.response_data_first = self.response_data[0:middle]
-        self.response_data_last = self.response_data[(middle+1):len(self.response_data)]
+        # Get first half of data
+        self.response_data_first    = data[0:middle]
+        self.response_mean_first    = self.response_data_first.mean(skipna = True)
+        self.response_std_first     = self.response_data_first.std(skipna = True)
 
-        self.response_mean_first   = self.response_data_first.mean(skipna = True)
-        self.response_std_first    = self.response_data_first.std(skipna = True)
-
+        # Get last half of data
+        self.response_data_last = data[(middle+1):len(data)]
         self.response_mean_last   = self.response_data_last.mean(skipna = True)
         self.response_std_last    = self.response_data_last.std(skipna = True)
 
+        # Get correlation of first and last half
         r_fl = self.response_mean_first.corr(self.response_mean_last)
         r2_fl = r_fl*r_fl
         print('{:<30}'.format('Autocorrelation') + ': 1Half vs 2Half R^2 = %s' %r2_fl)
-
-        fig_fl = plt.errorbar(self.response_mean_first, self.response_mean_last, self.response_std_first,self.response_std_last,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-        plt.title("First half vs. Last half | R^2 = %s" %r2_fl)
-        plt.xlabel("First half")
-        plt.ylabel("Second half")
-        plt.savefig(self.results_folder + 'correlation_images/' + 'first_half_vs_last_half.png')
         
-        # Random person R^2
-        random_person = random.randrange(0,len(self.response_data),1)
-        self.single_response = self.response_data.iloc[random_person]
+        # Plot correlation of first and last half
+        self.plot_correlation(self.response_mean_first,self.response_mean_last,
+                              self.response_std_last,self.response_std_first,
+                              'First half','Last Half','auto',r2_fl)
         
-        r_sm = self.single_response.corr(self.response_mean)
-        r2_sm = r_sm*r_sm
-        print('{:<30}'.format('Single random') + ': N' + '{:<4}'.format(str(random_person)) +  " vs Human R^2 = " + str(r2_sm))            
-        
-        plt.clf()
-        fig_sm = plt.errorbar(self.single_response, self.response_mean, self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-
-        plt.title("Single random " + str(random_person) + " vs. Mean responses | R^2 = %s" %r2_sm)
-        plt.xlabel("Single random person")
-        plt.ylabel("Mean responses")
-        plt.savefig(self.results_folder + 'correlation_images/' + 'single_vs_mean.png')
-
-        # d = {'single':self.single_response,'mean':self.response_mean}
-        # df = pd.DataFrame(d)
-        # print(df)
-          
-
-    def model(self):
-        # Get determinant of correlation
-        for parameter in self.model_data.keys()[1::]:
-            self.r = self.model_data[parameter].corr(self.response_mean)
-            self.r2 = self.r*self.r
-            print('{:<30}'.format(parameter) + ': Model vs Human R^2 = %s' %self.r2)
+    def random(self,useNorm=False,seed=100):
+        # Chose usage of normalized data
+        if useNorm == True:
+            data = self.response_normal 
+        else:
+            data = self.response_data
             
-            plt.clf()
-            fig_mr = plt.errorbar(self.model_data[parameter], self.response_mean,self.response_std,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-            plt.title("Model vs. responses " + parameter + " | R^2 = %s" %self.r2)
-            plt.xlabel("Model response")
-            plt.ylabel("Human response")
-
-
-            # Create linear fit of model and responses
-            linear_model = np.polyfit(self.model_data[parameter], self.response_mean, 1)
-            linear_model_fn = np.poly1d(linear_model)
-            x_s = np.arange(0, self.model_data[parameter].max())
-            fig_fl = plt.plot(x_s,linear_model_fn(x_s),color="green")
-
-            plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')           
-
+           # Get mean and std of responses
+        data_response_mean   = data.mean(skipna = True)
+        data_response_std    = data.std(skipna = True) 
     
+        # Chose random person 
+        random.seed(seed)
+        random_person = random.randrange(0,len(data),1)
+        self.single_response = data.iloc[random_person]
+        
+        # Get correlation of data and random person
+        r_sm = self.single_response.corr(data_response_mean)
+        r2_sm = r_sm*r_sm
+        print('{:<30}'.format('Single random') + ': N' + '{:<4}'.format(str(random_person)) +  " vs Human R^2 = " + str(r2_sm))     
+        
+        # Plot correlation of data and random person
+        self.plot_correlation(self.single_response,data_response_mean,
+                              data_response_std,[],
+                              ('Person n'+str(random_person)),'Response mean','random',r2_sm) 
+
+    def model(self,plotBool=True):
+        self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + self.modelDataPath)
+
+        # Get determinant of correlation
+        self.parameter_keys = list(self.model_data)
+        self.parameter_keys.pop(0)
+        
+        for parameter in self.parameter_keys:
+            # Get correlation
+            r2 = self.model_data[parameter].corr(self.response_mean)**2
+            
+            # Print correlation
+            print('{:<30}'.format(parameter) + ': Model vs Human R^2 = %s' %r2)
+            
+            # Save figure correlation
+            if plotBool == True:
+                self.plot_correlation(self.model_data[parameter],self.response_mean,
+                                    None,self.response_std,
+                                    str(parameter),'Response mean',parameter,r2)
+                 
+        r = self.model_data[self.parameter_keys[0]].corr(self.response_mean)
+
+        return r*r
+
     def risky_images(self):
         # Get most risky and least risky images
         response_mean_sorted = self.response_mean.sort_values()
@@ -146,20 +170,13 @@ class analyse:
             # os.path.join(self.dataPath + self.drive + '/image_02/data')
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'most_least_risky_images/' +'most_risky_%s.png' %i)
             i+=1
-            
-            
+                      
     def risk_ranking(self):
         response_mean_sorted = self.response_mean.sort_values()
         i = 0
         for image in response_mean_sorted.index:
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'risk_sorted_images/' + '%s.png' %i)
             i+=1
-        
-        
-
-
-        
-
 
     def PCA(self):
         images = os.listdir(self.dataPath + self.drive+ '/image_02/data/')
@@ -193,6 +210,31 @@ class analyse:
         # dataset = datasets.load_breast_cancer()
 
         # print(self.response_mean)
+    
+    def plot_correlation(self,series1,series2,
+                         std1 = None,
+                         std2 = None,
+                         name1 = 'Series 1', name2 = 'Series 2',
+                         parameter = 'Parameter',r2 = np.nan):
+        
+        # Plot errobar figure
+        plt.clf()
+        plt.errorbar(series1, series2,std2,std1,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+        plt.title(name1+ ' vs. ' + name2 +  " | R^2 = %s" %r2)
+        plt.xlabel(name1)
+        plt.ylabel(name2)
+
+        
+        # Create linear fit of model and responses 
+        linear_model = np.polyfit(series1,series2, 1)
+        linear_model_fn = np.poly1d(linear_model)
+        x_s = np.arange(series1.min(), series1.max())
+        
+        # Plot linear fit
+        plt.plot(x_s,linear_model_fn(x_s),color="red")
+
+        # Save figure
+        plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')        
         
         
 
@@ -207,7 +249,11 @@ if __name__ == "__main__":
     data.get_responses()
     data.info()
     data.split()
-    data.find_outliers()
     data.model()
-    data.risky_images()
-    data.risk_ranking()
+    # print(len(data.response_data))
+    # data.find_outliers(20)
+    # print(len(data.response_data))
+    # data.split()
+    # data.model()
+    # data.risky_images()
+    # data.risk_ranking()
