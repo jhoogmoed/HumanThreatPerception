@@ -79,9 +79,7 @@ class heroku:
 
         self.heroku_data = pd.DataFrame(self.dict_all)
         self.heroku_data = self.heroku_data.transpose()             
-        
-
-            
+             
     def makeCSV(self):
         heroku_name = self.jsonFile.split('.')[0]
         self.heroku_data.to_csv(self.results_folder + 'filtered_responses/' + heroku_name + '_responses.csv')

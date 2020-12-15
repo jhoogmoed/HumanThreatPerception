@@ -36,10 +36,7 @@ params = {'type/car': 0.2,
           'prob/city': 2,
           'prob/residential': 2,
           'imm/gain': 0.5,
-          'imm/bias': 5,
-          'gen/imm': 1,
-          'gen/type': 1,
-          'gen/prob': 1}
+          'imm/bias': 5}
 
 i = 0
 kp = kitti_parser()
@@ -55,8 +52,7 @@ def get_correlation(x):
     i += 1
     return 1-(r['c']**2)
 
-
-def get_corr(results, data_range, print_bool):
+def get_corr(results, data_range, print_bool = False):
     ranges = {'first': data.response_mean_first,
               'last': data.response_mean_last}
     r = {}
@@ -82,17 +78,17 @@ bnds = ((0, 100), (0, 100), (0, 100), (0, 100), (0, 100),
         (0, 100), (0, 100), (0, 100),
         (0, 10), (0, 10))
 
-# bnds  = ((0, 1),(0, 1),(0,1),(0, 1),(0, 1),
-#            (0, 1),(0, 1),(0, 1),(0, 1),
-#            (0, 1),(0, 1),(0, 1),
-#            (0, 1),(-10, 10))
+# bnds = ((-100, 100), (-100, 100), (-100, 100), (-100, 100), (-100, 100),
+#         (-100, 100), (-100, 100), (-100, 100), (-100, 100),
+#         (-100, 100), (-100, 100), (-100, 100),
+#         (-100, 100), (0, 100))
 
 
 # Broyden-Fletcher-Goldfarb-Shanno method
-res = minimize(get_correlation, x0, method='TNC', bounds=bnds, options={
-               'disp': True, 'maxfun': None, 'ftol': 1e-9, 'gtol': 1e-9})
+# res = minimize(get_correlation, x0, method='TNC', bounds=bnds, options={
+#                'disp': True, 'maxfun': None, 'ftol': 1e-9, 'gtol': 1e-9})
 
-# res = minimize(get_correlation, x0, method='SLSQP',bounds=bnds,options={'disp': True,'ftol': 1e-8}) #
+res = minimize(get_correlation, list(params.values()), method='L-BFGS-B',bounds=bnds,options={'disp': True}) #
 
 # Basinhopper method
 # minimizer_kwargs = {"method": "L-BFGS-B",'bounds':bnds,'options':{'maxfun': 100000,'ftol': 1e-8,'gtol': 1e-8}}
@@ -120,5 +116,6 @@ get_corr(final_results, 'first', True)
 print("Correlation second half (evaluation)")
 get_corr(final_results, 'last', True)
 
-# Get images
 data.model()
+# Get images
+# data.model()

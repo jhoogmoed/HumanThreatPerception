@@ -3,6 +3,7 @@ import os
 import numpy as np
 import htpm_kitti.kitti.tracklet_parser as tracklet_parser
 import collections
+import pandas as pd
 
 kittiObject = collections.namedtuple('kittiObject', ['type',
                                                      'truncated',
@@ -75,6 +76,15 @@ class kitti_parser():
         self.get_road()
         self.get_objects()
         self.get_imu()
+        self.get_manual()
+        
+    def get_road(self):
+        road_file = open(self.dataPath + self.drive +
+                         '/uniform_image_list.txt', "r")
+        lines = road_file.readlines()
+        self.road_types = []
+        for i in range(len(lines)):
+            self.road_types.append(lines[i].split('/')[0])
 
     def get_objects(self):
         self.objectsList = []
@@ -152,14 +162,9 @@ class kitti_parser():
             # Close file
             imu_file.close
 
-    def get_road(self):
-        road_file = open(self.dataPath + self.drive +
-                         '/uniform_image_list.txt', "r")
-        lines = road_file.readlines()
-        self.road_types = []
-        for i in range(len(lines)):
-            self.road_types.append(lines[i].split('/')[0])
-
+    def get_manual(self):
+        self.manual_data = pd.read_csv(self.dataPath + self.drive + '/manual_data.csv')     
+   
     def sorter(self, name):
         frame = int(name.split('.')[0])
         return frame
@@ -190,62 +195,59 @@ class kitti_parser():
 
     def fast_type(self, x):
         par_type = []
+        par_y_location = []
         for frame_objects in self.objectsList:
             types = []
+            y_locations = []
             for object in frame_objects:
                 types.append(self.typeSwitch(object.type, x))
+                y_locations.append(object.alpha)
             par_type.append(sum(types))
-        return par_type
+            par_y_location.append(y_locations)
+        return par_type, par_y_location
 
     def fast_imm(self, x):
+        # Get variables from arguments
         a = x[12]
         b = x[13]
+
+        # Create empty return lists
         par_total_distance = []
-        par_closest_distance = []
         par_velocity = []
         par_imm = []
 
         # Get object and ego vehicle data per frame
         for frame in range(len(self.imuFileList)):
             # Get ego velocity
-
             velocity = np.linalg.norm(self.imuList[frame].linear_velocity, 2)
 
-            # Save velocity parameter
-            par_velocity.append(velocity)
+            # Construct save variables
+            all_imminence = []
+            all_distance = []
 
             # Get object data per object in frame
-            imms = []
-            smallest_distance = 10000
-            smallest_velocity = 10000
             for object in self.objectsList[frame]:
-
                 distance = np.linalg.norm(object.location, 2)
-                if distance < smallest_distance:
-                    smallest_distance = distance
-                    smallest_velocity = velocity
-
-                # Calculate time headway per vehicle
-                smallest_thw = smallest_distance / smallest_velocity
-                thw = distance / velocity
-
-                # Throw out weird data if present
-                if thw < 0:
-                    thw = 0
 
                 # Linear imminence parameter
-                # imm =  a * thw + b
+                # imm =  a * distance/velocity + b
 
                 # Quadratic imminence parameter
                 if b == 0:
-                    imm = 0
+                    imm = np.nan
                 else:
-                    imm = a*thw**(1/b)
+                    imm = a*(distance/velocity)**(1/b)
 
-                imms.append(imm)
-            par_imm.append(sum(imms))
+                # Save paremeter per object
+                all_imminence.append(imm)
+                all_distance.append(distance)
+
+            # Save parameter values per frame
+            par_imm.append(sum(all_imminence))
+            par_velocity.append(velocity)
+            par_total_distance.append(all_distance)
             frame += 1
-        return par_imm
+        return par_imm, par_velocity, par_total_distance
 
     def fast_prob(self, x):
         probability_par = []
@@ -255,62 +257,84 @@ class kitti_parser():
         return probability_par
 
     def get_model(self, x):
-        results = {'Frame number': [],
-                   'Combination parameter': [],
-                   'Type parameter': [],
-                   'Imminence parameter': [],
-                   'Probability parameter': []}
-
         # Get individual model results
-        par_imminence = self.fast_imm(x)
-        par_type = self.fast_type(x)
+        par_all_imminence, par_velocity, par_all_distance = self.fast_imm(x)
+        par_type, par_y_location = self.fast_type(x)
         par_probability = self.fast_prob(x)
 
-        # Get combined model results
+        # Construct empty lists for itereation
         par_combi = []
-        for i in range(len(par_imminence)):
-            par_combi.append(par_imminence[i] +
-                             par_type[i] + par_probability[i])
+        sum_distance = []
+        min_distance = []
+        mean_distance= []
+        number_objects = []
+        min_y_location = []
+        mean_y_location = []
+        max_y_location = []
+        
+        # Get combined model results
+        for frame in range(len(par_all_imminence)):
+            par_combi.append(par_all_imminence[frame] +
+                             par_type[frame] + par_probability[frame])
+            sum_distance.append(sum(par_all_distance[frame]))
+            min_distance.append(min(par_all_distance[frame], default=0))
+            if len(par_all_distance[frame]) != 0:
+                mean_distance.append(sum(par_all_distance[frame])/len(par_all_distance[frame]))
+                number_objects.append(len(par_all_distance[frame]))
+                min_y_location.append(min(par_y_location[frame]))
+                mean_y_location.append(sum(par_y_location[frame])/len(par_y_location[frame]))
+                max_y_location.append(max(par_y_location[frame]))
+            else:
+                mean_distance.append(0.0)
+                number_objects.append(0.0)
+                min_y_location.append(0.0)
+                mean_y_location.append(0.0)
+                max_y_location.append(0.0)
+        # Create empty dict
+        results = {}
 
-        # Update dict
+        # Add items to dict
         results['Frame number'] = range(len(self.left_color_image_list))
         results['Combination parameter'] = par_combi
         results['Type parameter'] = par_type
-        results['Imminence parameter'] = par_imminence
+        results['Imminence parameter'] = par_all_imminence
         results['Probability parameter'] = par_probability
-
+        results['Velocity'] = par_velocity
+        results['SumDistance'] = sum_distance
+        results['MinDistance'] = min_distance
+        results['MeanDistance'] = mean_distance
+        results['NumberObjects'] = number_objects
+        results['CarToward'] = self.manual_data.CarToward
+        results['CarAway'] = self.manual_data.CarAway
+        results['Breaklight'] = self.manual_data.Breaklight
+        results['MinYLocation'] = min_y_location
+        results['MeanYLocation'] = mean_y_location
+        results['MaxYLocation'] = max_y_location
+        
         return results
 
     def save_model(self, x):
-        # Open results file
-        csvFile = open(os.path.join(self.results_folder,
-                                    'model_responses/model_results.csv'), 'a')
-        csvFile.write('Frame,Combi,Type,Imminence,Probabiltiy\n')
-
-        # Get individual model results
-        par_imminence = self.fast_imm(x)
-        par_type = self.fast_type(x)
-        par_probability = self.fast_prob(x)
-
-        # Get combined model results
-        par_combi = []
-        for frame in range(len(par_imminence)):
-            par_combi.append(
-                par_imminence[frame] + par_type[frame] + par_probability[frame])
-
-            # Save to results file
-            csvFile.write(str(frame) + ',' + str(par_combi[frame]) + ',' + str(
-                par_type[frame]) + ',' + str(par_imminence[frame]) + ',' + str(par_probability[frame]) + '\n')
-
-        # Close results file
-        csvFile.close
+        # Get model response
+        results = self.get_model(x)
+        
+        # Create dataframe from dict
+        resultsDF = pd.DataFrame.from_dict(results)
+        
+        # save dataframe as csv file
+        resultsDF.to_csv(os.path.join(self.results_folder,'model_responses/model_results.csv'),index=False)
 
 
 if __name__ == "__main__":
     kp = kitti_parser()
-
-    x = [0.97249244, -0.73035007,  3.78233866,  1.71937009, 2.80132008,
-         0.13719511, -2.1247334, 0.11580047,  1.4249498,
-         0.12294739,  2.06632313, -0.75077797,
-         -0.19353087,  0.15254572]
+    # x= [4.27610856e-04, 1.45974044e+00, 2.62900120e+00, 9.62085386e-01,
+    # 2.20925109e+00, 1.65389815e+00, 0.00000000e+00, 0.00000000e+00,
+    # 1.00000000e+00, 2.19741474e+00, 2.38762078e+00, 1.71437038e-01,
+    # 2.02991765e-01, 6.54605730e+00]
+    
+    x= [0.,1.458974,2.63547244,0.96564807,2.21222542,1.65225034,
+        0.,0.,1.,2.20176468, 2.40070779, 0.17505598,
+        0.20347586, 6.54656438]
+    
+    results = kp.get_model(x)
     kp.save_model(x)
+
