@@ -60,5 +60,8 @@ CATKIN_IGNORE
 *.bag
 .catkin_workspace
 */egg-info
+*.egg-info
+*/__pycache__
+
 
 

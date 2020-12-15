@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 
 
-from compare_res_vs_model import analyse
-from parameter_services import kitti_parser
+from compare import analyse
+from services import kitti_parser
 
 from scipy.optimize import minimize
 

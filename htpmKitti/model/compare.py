@@ -5,6 +5,7 @@ import numpy as np
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+import cv2
 
 from pandas.core.frame import DataFrame
 from sklearn import decomposition, datasets

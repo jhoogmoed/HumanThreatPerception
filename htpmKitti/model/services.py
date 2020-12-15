@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import os
 import numpy as np
-import htpm_kitti.kitti.tracklet_parser as tracklet_parser
+import htpmKitti.kitti.tracklet_parser as tracklet_parser
 import collections
 import pandas as pd
 
-kittiObject = collections.namedtuple('kittiObject', ['type',
+KittiObject = collections.namedtuple('KittiObject', ['type',
                                                      'truncated',
                                                      'occluded',
                                                      'alpha',
@@ -13,8 +13,7 @@ kittiObject = collections.namedtuple('kittiObject', ['type',
                                                      'dimensions',
                                                      'location',
                                                      'location_y'])
-kittiImu = collections.namedtuple(
-    'kittiImu', ['location', 'linear_velocity', 'linear_acceleration'])
+KittiImu = collections.namedtuple('KittiImu', ['location', 'linear_velocity', 'linear_acceleration'])
 
 
 class kitti_parser():
@@ -116,7 +115,7 @@ class kitti_parser():
                 location_y = float(oArgs[14])
 
                 # Append object list of frame
-                objects.append(kittiObject(type,
+                objects.append(KittiObject(type,
                                            truncated,
                                            occluded,
                                            alpha,
@@ -137,7 +136,7 @@ class kitti_parser():
                 self.dataPath + self.drive + '/oxts/data/' + file, "r")
 
             # Create new imu msg
-            # imuObject = kittiImu
+            # imuObject = KittiImu
 
             # Get imu data from file
             line = imu_file.readline()
@@ -158,7 +157,7 @@ class kitti_parser():
                 float(imuArgs[12]),
                 float(imuArgs[13])]
             self.imuList.append(
-                kittiImu(location, linear_velocity, linear_acceleration))
+                KittiImu(location, linear_velocity, linear_acceleration))
             # Close file
             imu_file.close
 
