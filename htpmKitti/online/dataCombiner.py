@@ -3,45 +3,52 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from herokuFunctions import *
-from appenFunctions import *
+from online.herokuFunctions import heroku
+from online.appenFunctions import appen
 
-# Set name of heroku and appen file
-herokuFile  = 'entries_1.json'
-appenFile   = 'f1669822.csv'
-results_folder   ='/home/jim/HDDocuments/university/master/thesis/results/'
+class combiner:
+    def __init__(self,herokuFile,appenFile,resultsFolder):
+        self.herokuFile     = herokuFile
+        self.appenFile      = appenFile
+        self.resultsFolder  = resultsFolder
+        
+    def combine(self):
+        # Create heroku and appen class
+        h = heroku(self.herokuFile,self.resultsFolder)
+        a = appen(self.appenFile,self.resultsFolder)
 
+        # Find cheaters
+        a.find_cheaters('daniel') #'daniel' format or 'standard'
 
-# Create heroku and appen class
-h = heroku(herokuFile,results_folder)
-a = appen(appenFile,results_folder)
+        # Make CSV file of results
+        appenUniqueFile, appenCheaterFile   = a.makeCSV()
+        herokuResponseFile                  = h.makeCSV()
 
-# Find cheaters
-a.find_cheaters('daniel') #'daniel' format or 'standard'
+        # Get pandas DataFrame from csv files
+        heroku_data = pd.read_csv(herokuResponseFile)
+        appen_data  = pd.read_csv(appenUniqueFile)
 
-# Make CSV file of results
-appenUniqueFile, appenCheaterFile   = a.makeCSV()
-herokuResponseFile                  = h.makeCSV()
+        # Rename worker code column for merging
+        appen_data.rename(columns = {'type_the_code_that_you_received_at_the_end_of_the_experiment':'Meta:worker_code'}, inplace = True)
 
-# Get pandas DataFrame from csv files
-heroku_data = pd.read_csv(herokuResponseFile)
-appen_data  = pd.read_csv(appenUniqueFile)
+        # Merger dataframes
+        merge_data = appen_data.merge(heroku_data, on = 'Meta:worker_code')
 
-# Rename worker code column for merging
-appen_data.rename(columns = {'type_the_code_that_you_received_at_the_end_of_the_experiment':'Meta:worker_code'}, inplace = True)
+        # Remove empty and old index columns
+        for key in merge_data.keys():
+            if 'gold' in key:
+                del merge_data[key]
+            if 'Unnamed' in key:
+                del merge_data[key]
 
-# Merger dataframes
-merge_data = appen_data.merge(heroku_data, on = 'Meta:worker_code')
+        # Save merged DataFrame as CSV
+        merge_data.to_csv(self.resultsFolder + 'filtered_responses/' + 'merged_data.csv')
+        print('There are %s unique responses' %len(merge_data))
 
-# Remove empty and old index columns
-for key in merge_data.keys():
-    if 'gold' in key:
-        del merge_data[key]
-    if 'Unnamed' in key:
-        del merge_data[key]
-
-# Save merged DataFrame as CSV
-merge_data.to_csv(results_folder + 'filtered_responses/' + 'merged_data.csv')
-print('There are %s unique responses' %len(merge_data))
-
-
+if __name__ == "__main__":
+    herokuFile  = 'entries_1.json'
+    appenFile   = 'f1669822.csv'
+    resultsFolder   ='/home/jim/HDDocuments/university/master/thesis/results/'
+    c = combiner(herokuFile,appenFile,resultsFolder)
+    c.combine()
+    
