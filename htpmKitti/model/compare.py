@@ -101,7 +101,7 @@ class analyse:
         # Plot correlation of first and last half
         self.plot_correlation(self.response_mean_first,self.response_mean_last,
                               self.response_std_last,self.response_std_first,
-                              'First half','Last Half','auto',r2_fl)
+                              'First half','Last Half','general_autocorrelation',r2_fl)
         
     def random(self,useNorm=False,seed=100):
         # Chose usage of normalized data
@@ -147,7 +147,7 @@ class analyse:
             if plotBool == True:
                 self.plot_correlation(self.model_data[parameter],self.response_mean,
                                     None,self.response_std,
-                                    str(parameter),'Response mean',parameter,r2)
+                                    str(parameter),'response_mean',parameter,r2)
                  
         r = self.model_data[self.parameter_keys[0]].corr(self.response_mean)
 
@@ -228,13 +228,13 @@ class analyse:
         # Create linear fit of model and responses 
         linear_model = np.polyfit(series1,series2, 1)
         linear_model_fn = np.poly1d(linear_model)
-        x_s = np.arange(series1.min(), series1.max())
+        x_s = np.arange(series1.min(), series1.max(),((series1.max()-series1.min())/1000))
         
         # Plot linear fit
         plt.plot(x_s,linear_model_fn(x_s),color="red")
 
         # Save figure
-        plt.savefig(self.results_folder + 'correlation_images/' + 'model_vs_human_' + parameter + '.png')        
+        plt.savefig(self.results_folder + 'correlation_images/' + parameter + '.png')        
         
         
 

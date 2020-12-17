@@ -13,7 +13,8 @@ KittiObject = collections.namedtuple('KittiObject', ['type',
                                                      'dimensions',
                                                      'location',
                                                      'location_y'])
-KittiImu = collections.namedtuple('KittiImu', ['location', 'linear_velocity', 'linear_acceleration'])
+KittiImu = collections.namedtuple(
+    'KittiImu', ['location', 'linear_velocity', 'linear_acceleration'])
 
 
 class kitti_parser():
@@ -76,7 +77,7 @@ class kitti_parser():
         self.get_objects()
         self.get_imu()
         self.get_manual()
-        
+
     def get_road(self):
         road_file = open(self.dataPath + self.drive +
                          '/uniform_image_list.txt', "r")
@@ -162,8 +163,9 @@ class kitti_parser():
             imu_file.close
 
     def get_manual(self):
-        self.manual_data = pd.read_csv(self.dataPath + self.drive + '/manual_data.csv')     
-   
+        self.manual_data = pd.read_csv(
+            self.dataPath + self.drive + '/manual_data.csv')
+
     def sorter(self, name):
         frame = int(name.split('.')[0])
         return frame
@@ -200,7 +202,7 @@ class kitti_parser():
             y_locations = []
             for object in frame_objects:
                 types.append(self.typeSwitch(object.type, x))
-                y_locations.append(object.alpha)
+                y_locations.append(abs(object.alpha))
             par_type.append(sum(types))
             par_y_location.append(y_locations)
         return par_type, par_y_location
@@ -265,23 +267,27 @@ class kitti_parser():
         par_combi = []
         sum_distance = []
         min_distance = []
-        mean_distance= []
+        mean_distance = []
         number_objects = []
         min_y_location = []
         mean_y_location = []
         max_y_location = []
-        
+
         # Get combined model results
         for frame in range(len(par_all_imminence)):
             par_combi.append(par_all_imminence[frame] +
                              par_type[frame] + par_probability[frame])
             sum_distance.append(sum(par_all_distance[frame]))
             min_distance.append(min(par_all_distance[frame], default=0))
+            
+            # Check for objects present
             if len(par_all_distance[frame]) != 0:
-                mean_distance.append(sum(par_all_distance[frame])/len(par_all_distance[frame]))
+                mean_distance.append(
+                    sum(par_all_distance[frame])/len(par_all_distance[frame]))
                 number_objects.append(len(par_all_distance[frame]))
                 min_y_location.append(min(par_y_location[frame]))
-                mean_y_location.append(sum(par_y_location[frame])/len(par_y_location[frame]))
+                mean_y_location.append(
+                    sum(par_y_location[frame])/len(par_y_location[frame]))
                 max_y_location.append(max(par_y_location[frame]))
             else:
                 mean_distance.append(0.0)
@@ -289,51 +295,48 @@ class kitti_parser():
                 min_y_location.append(0.0)
                 mean_y_location.append(0.0)
                 max_y_location.append(0.0)
+                
         # Create empty dict
         results = {}
 
         # Add items to dict
-        results['Frame number'] = range(len(self.left_color_image_list))
-        results['Combination parameter'] = par_combi
-        results['Type parameter'] = par_type
-        results['Imminence parameter'] = par_all_imminence
-        results['Probability parameter'] = par_probability
-        results['Velocity'] = par_velocity
-        results['SumDistance'] = sum_distance
-        results['MinDistance'] = min_distance
-        results['MeanDistance'] = mean_distance
-        results['NumberObjects'] = number_objects
-        results['CarToward'] = self.manual_data.CarToward
-        results['CarAway'] = self.manual_data.CarAway
-        results['Breaklight'] = self.manual_data.Breaklight
-        results['MinYLocation'] = min_y_location
-        results['MeanYLocation'] = mean_y_location
-        results['MaxYLocation'] = max_y_location
-        
+        results['general_frame_number'] = range(
+            len(self.left_color_image_list))
+        results['model_combination'] = par_combi
+        results['model_type_'] = par_type
+        results['model_imminence'] = par_all_imminence
+        results['model_probability'] = par_probability
+        results['general_velocity'] = par_velocity
+        results['general_distance_sum'] = sum_distance
+        results['general_distance_min'] = min_distance
+        results['general_distance_mean'] = mean_distance
+        results['general_number_bjects'] = number_objects
+        results['manual_car_toward'] = self.manual_data.CarToward
+        results['manual_car_away'] = self.manual_data.CarAway
+        results['manual_breaklight'] = self.manual_data.Breaklight
+        results['alpha_min'] = min_y_location
+        results['alpha_mean'] = mean_y_location
+        results['alpha_max'] = max_y_location
+
         return results
 
     def save_model(self, x):
         # Get model response
         results = self.get_model(x)
-        
+
         # Create dataframe from dict
         resultsDF = pd.DataFrame.from_dict(results)
-        
+
         # save dataframe as csv file
-        resultsDF.to_csv(os.path.join(self.results_folder,'model_responses/model_results.csv'),index=False)
+        resultsDF.to_csv(os.path.join(self.results_folder,
+                                      'model_responses/model_results.csv'), index=False)
 
 
 if __name__ == "__main__":
     kp = kitti_parser()
-    # x= [4.27610856e-04, 1.45974044e+00, 2.62900120e+00, 9.62085386e-01,
-    # 2.20925109e+00, 1.65389815e+00, 0.00000000e+00, 0.00000000e+00,
-    # 1.00000000e+00, 2.19741474e+00, 2.38762078e+00, 1.71437038e-01,
-    # 2.02991765e-01, 6.54605730e+00]
-    
-    x= [0.,1.458974,2.63547244,0.96564807,2.21222542,1.65225034,
-        0.,0.,1.,2.20176468, 2.40070779, 0.17505598,
-        0.20347586, 6.54656438]
-    
+    x = [0., 1.458974, 2.63547244, 0.96564807, 2.21222542, 1.65225034, 0., 0., 1.,
+         2.20176468, 2.40070779, 0.1750559,
+         0.20347586, 6.54656438]
+
     results = kp.get_model(x)
     kp.save_model(x)
-
