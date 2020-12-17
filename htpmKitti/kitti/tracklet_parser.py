@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 # Import select
-import htpm_kitti.kitti.parseTrackletXML as xmlParser
+import htpmKitti.kitti.parseTrackletXML as xmlParser
 
 # -------------------------------------------
 def main(kittiDir,drive):
