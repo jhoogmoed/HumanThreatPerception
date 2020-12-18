@@ -5,7 +5,7 @@ import os
 import random
 import shutil
 import sys
-import numpy
+import numpy as np
 import pickle
 
 
@@ -128,8 +128,7 @@ for i in range(0, len(roadTypes)):
         if drives[i][j].roadType == roadTypes[i]:
             # Get number of frames per road type
             n_frames[i] = n_frames[i]+len(drives[i][j].images)
-    frame_indices[i] = numpy.linspace(0, n_frames[i]-1, total_frames/len(n_frames), dtype = int)
-
+    frame_indices[i] = [int(a) for a in np.linspace(0, n_frames[i]-1, round(total_frames/len(n_frames)))]
 
 for i in range(0, len(roadTypes)):
     for j in range(0, len(drives[i])):

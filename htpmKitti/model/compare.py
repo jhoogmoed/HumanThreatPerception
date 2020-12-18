@@ -4,6 +4,7 @@ import shutil
 import numpy as np
 import random
 import pandas as pd
+import seaborn as sn
 import matplotlib.pyplot as plt
 import cv2
 
@@ -12,17 +13,17 @@ from sklearn import decomposition, datasets
 from sklearn.preprocessing import StandardScaler
 
 class analyse:
-    def __init__(self,dataPath,drive,mergedDataPath,modelDataPath,results_folder):   
+    def __init__(self,dataPath,drive,mergedDataFile,modelDataFile,results_folder):   
         # Docstring    
         "Class container for analysing functions."
-        self.modelDataPath = modelDataPath
+        self.modelDataFile = modelDataFile
         # Set paths
         self.dataPath       = dataPath
         self.drive          = drive
         self.results_folder = results_folder
 
         # Load data
-        self.merge_data = pd.read_csv(self.results_folder + 'filtered_responses/' + mergedDataPath)
+        self.merge_data = pd.read_csv(mergedDataFile)
          
     def get_responses(self):
         # Get response per frame
@@ -96,12 +97,12 @@ class analyse:
         # Get correlation of first and last half
         r_fl = self.response_mean_first.corr(self.response_mean_last)
         r2_fl = r_fl*r_fl
-        print('{:<30}'.format('Autocorrelation') + ': 1Half vs 2Half R^2 = %s' %r2_fl)
+        print('{:<25}'.format('autocorrelation') + ': R^2 =',f'{r2_fl:.5f}')
         
         # Plot correlation of first and last half
         self.plot_correlation(self.response_mean_first,self.response_mean_last,
                               self.response_std_last,self.response_std_first,
-                              'First half','Last Half','general_autocorrelation',r2_fl)
+                              'first_half','last_half','general_autocorrelation',round(r2_fl,5))
         
     def random(self,useNorm=False,seed=100):
         # Chose usage of normalized data
@@ -130,28 +131,44 @@ class analyse:
                               ('Person n'+str(random_person)),'Response mean','random',r2_sm) 
 
     def model(self,plotBool=True):
-        self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + self.modelDataPath)
-
-        # Get determinant of correlation
+        self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + self.modelDataFile)
+        
+        # Get keys
         self.parameter_keys = list(self.model_data)
-        self.parameter_keys.pop(0)
+        self.parameter_keys.remove('general_frame_number')
+        self.model_data.pop('general_frame_number')
+        
         
         for parameter in self.parameter_keys:
             # Get correlation
             r2 = self.model_data[parameter].corr(self.response_mean)**2
             
             # Print correlation
-            print('{:<30}'.format(parameter) + ': Model vs Human R^2 = %s' %r2)
+            print('{:<25}'.format(parameter) + ': R^2 =',f'{r2:.5f}')
             
             # Save figure correlation
             if plotBool == True:
                 self.plot_correlation(self.model_data[parameter],self.response_mean,
                                     None,self.response_std,
-                                    str(parameter),'response_mean',parameter,r2)
-                 
-        r = self.model_data[self.parameter_keys[0]].corr(self.response_mean)
+                                    str(parameter),'response_mean',parameter,round(r2,5))
+        
+        # Add mean response to correlation matrix
+        self.model_data['respone_mean'] = self.response_mean
 
-        return r*r
+        # Get correlation matrix
+        corrMatrix = self.model_data.corr()
+        
+        # Remove uppper triangle
+        mask = np.zeros_like(corrMatrix)
+        mask[np.triu_indices_from(mask,k=1)] = True
+        
+        # Plot correlation matrix
+        plt.clf()
+        sn.heatmap(corrMatrix,vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True)       
+        plt.show()
+        
+        r = self.model_data['model_combination'].corr(self.response_mean)
+        return r**2
 
     def risky_images(self):
         # Get most risky and least risky images
@@ -241,19 +258,12 @@ class analyse:
 if __name__ == "__main__":
     dataPath        = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
     drive           = '/test_images'
-    results_folder  = '/home/jim/HDDocuments/university/master/thesis/results/'
-    mergedDataPath  = 'merged_data.csv'
-    modelDataPath   = 'model_results.csv'
+    resultsFolder  = '/home/jim/HDDocuments/university/master/thesis/results/'
+    mergedDataFile  = '/home/jim/HDDocuments/university/master/thesis/results/filtered_responses/merged_data.csv'
+    modelDataFile   = 'model_results.csv'
     
-    data = analyse(dataPath,drive,mergedDataPath,modelDataPath,results_folder)
-    data.get_responses()
-    data.info()
-    data.split()
-    data.model()
-    # print(len(data.response_data))
-    # data.find_outliers(20)
-    # print(len(data.response_data))
-    # data.split()
-    # data.model()
-    # data.risky_images()
-    # data.risk_ranking()
+    analyse = analyse(dataPath,drive,mergedDataFile,modelDataFile,resultsFolder)
+    analyse.get_responses()
+    analyse.info()
+    analyse.split()
+    analyse.model()

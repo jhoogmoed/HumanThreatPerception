@@ -17,21 +17,19 @@ KittiImu = collections.namedtuple(
     'KittiImu', ['location', 'linear_velocity', 'linear_acceleration'])
 
 
-class kitti_parser():
-    def __init__(self):
-        # rospy.init_node('htpm_kitti_parser', anonymous = False)
+class kitti_parser:
+    def __init__(self,dataPath,drive,resultsFolder):
         # Set base paths
-        self.dataPath = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
-        # self.drive                  = '/city/2011_09_26_drive_0093_sync'
-        self.drive = '/test_images'
-        self.results_folder = '/home/jim/HDDocuments/university/master/thesis/results'
+        self.dataPath = dataPath 
+        self.drive = drive
+        self.resultsFolder = resultsFolder
 
         # Check if exists
         if(not os.path.exists(self.dataPath+self.drive)):
             print("Drive does not exist")
             raise SystemExit
 
-        # Image paths
+        # Image pathsdataPath,drive,resultsFolder
         try:
             self.left_color_image_list = sorted(os.listdir(
                 self.dataPath + self.drive + '/image_02/data'), key=self.sorter)
@@ -67,7 +65,7 @@ class kitti_parser():
 
         # Setup data acquisition
         try:
-            os.remove(os.path.join(self.results_folder,
+            os.remove(os.path.join(self.resultsFolder,
                                    'model_responses/model_results.csv'))
         except:
             pass
@@ -196,16 +194,28 @@ class kitti_parser():
 
     def fast_type(self, x):
         par_type = []
-        par_y_location = []
+        par_alpha = []
+        par_occluded = []
+        par_truncated = []
+        par_size = []
         for frame_objects in self.objectsList:
             types = []
-            y_locations = []
+            alpha = []
+            occluded = []
+            truncated = []
+            size = []
             for object in frame_objects:
                 types.append(self.typeSwitch(object.type, x))
-                y_locations.append(abs(object.alpha))
+                alpha.append(abs(object.alpha))
+                occluded.append(object.occluded)
+                truncated.append(object.truncated)
+                size.append(np.prod(object.dimensions))
+            par_alpha.append(alpha)
             par_type.append(sum(types))
-            par_y_location.append(y_locations)
-        return par_type, par_y_location
+            par_occluded.append(occluded)
+            par_truncated.append(truncated)
+            par_size.append(size)
+        return par_type, par_alpha, par_occluded, par_truncated,par_size
 
     def fast_imm(self, x):
         # Get variables from arguments
@@ -260,41 +270,82 @@ class kitti_parser():
     def get_model(self, x):
         # Get individual model results
         par_all_imminence, par_velocity, par_all_distance = self.fast_imm(x)
-        par_type, par_y_location = self.fast_type(x)
+        par_type, par_alpha, par_occluded, par_truncated,par_size = self.fast_type(x)
         par_probability = self.fast_prob(x)
 
         # Construct empty lists for itereation
         par_combi = []
+        
+        number_objects = []
+        
         sum_distance = []
         min_distance = []
         mean_distance = []
-        number_objects = []
-        min_y_location = []
-        mean_y_location = []
-        max_y_location = []
+        
+        min_alpha = []
+        mean_alpha = []
+        max_alpha = []
+        
+        mean_par_occluded = []
+        sum_par_occluded = []
+        
+        mean_par_truncated = []
+        sum_par_truncated = []
+        
+        mean_par_size = []
+        max_par_size = []
+        min_par_size = []
+        sum_par_size = []
+        
 
         # Get combined model results
         for frame in range(len(par_all_imminence)):
-            par_combi.append(par_all_imminence[frame] +
-                             par_type[frame] + par_probability[frame])
             sum_distance.append(sum(par_all_distance[frame]))
             min_distance.append(min(par_all_distance[frame], default=0))
             
             # Check for objects present
             if len(par_all_distance[frame]) != 0:
+                number_objects.append(len(par_all_distance[frame]))
+                
                 mean_distance.append(
                     sum(par_all_distance[frame])/len(par_all_distance[frame]))
-                number_objects.append(len(par_all_distance[frame]))
-                min_y_location.append(min(par_y_location[frame]))
-                mean_y_location.append(
-                    sum(par_y_location[frame])/len(par_y_location[frame]))
-                max_y_location.append(max(par_y_location[frame]))
+                
+                min_alpha.append(min(par_alpha[frame]))
+                mean_alpha.append(
+                    sum(par_alpha[frame])/len(par_alpha[frame]))
+                max_alpha.append(max(par_alpha[frame]))
+                
+                mean_par_occluded.append(sum(par_occluded[frame])/len(par_occluded[frame]))
+                sum_par_occluded.append(sum(par_occluded[frame]))
+                
+                mean_par_truncated.append(sum(par_truncated[frame])/len(par_truncated[frame]))
+                sum_par_truncated.append(sum(par_truncated[frame]))
+                
+                mean_par_size.append(sum(par_size[frame])/len(par_size[frame]))
+                max_par_size.append(max(par_size[frame]))
+                min_par_size.append(min(par_size[frame]))
+                sum_par_size.append(sum(par_size[frame]))
+                
             else:
-                mean_distance.append(0.0)
                 number_objects.append(0.0)
-                min_y_location.append(0.0)
-                mean_y_location.append(0.0)
-                max_y_location.append(0.0)
+                mean_distance.append(0.0)
+                
+                min_alpha.append(0.0)
+                mean_alpha.append(0.0)
+                max_alpha.append(0.0)
+                
+                mean_par_occluded.append(0.0)
+                sum_par_occluded.append(0.0)
+                
+                mean_par_truncated.append(0.0)
+                sum_par_truncated.append(0.0)
+                
+                mean_par_size.append(0.0)
+                max_par_size.append(0.0)
+                min_par_size.append(0.0)
+                sum_par_size.append(0.0)
+            par_combi.append(par_all_imminence[frame] +
+                            par_type[frame] + par_probability[frame])
                 
         # Create empty dict
         results = {}
@@ -303,7 +354,7 @@ class kitti_parser():
         results['general_frame_number'] = range(
             len(self.left_color_image_list))
         results['model_combination'] = par_combi
-        results['model_type_'] = par_type
+        results['model_type'] = par_type
         results['model_imminence'] = par_all_imminence
         results['model_probability'] = par_probability
         results['general_velocity'] = par_velocity
@@ -314,13 +365,21 @@ class kitti_parser():
         results['manual_car_toward'] = self.manual_data.CarToward
         results['manual_car_away'] = self.manual_data.CarAway
         results['manual_breaklight'] = self.manual_data.Breaklight
-        results['alpha_min'] = min_y_location
-        results['alpha_mean'] = mean_y_location
-        results['alpha_max'] = max_y_location
+        results['alpha_min'] = min_alpha
+        results['alpha_mean'] = mean_alpha
+        results['alpha_max'] = max_alpha
+        results['occluded_mean'] = mean_par_occluded
+        results['occluded_sum'] = sum_par_occluded
+        results['truncated_mean'] = mean_par_truncated
+        results['truncated_sum'] = sum_par_truncated
+        results['size_mean'] = mean_par_size
+        results['size_max'] = max_par_size
+        results['size_min'] = min_par_size
+        results['size_sum'] = sum_par_size
 
         return results
 
-    def save_model(self, x):
+    def save_model(self, x,modelFile = 'model_results.csv'):
         # Get model response
         results = self.get_model(x)
 
@@ -328,15 +387,26 @@ class kitti_parser():
         resultsDF = pd.DataFrame.from_dict(results)
 
         # save dataframe as csv file
-        resultsDF.to_csv(os.path.join(self.results_folder,
-                                      'model_responses/model_results.csv'), index=False)
+        resultsDF.to_csv(os.path.join(self.resultsFolder,
+                                      'model_responses',modelFile), index=False)
 
 
 if __name__ == "__main__":
-    kp = kitti_parser()
+    # Example input
+    dataPath       = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
+    drive          = '/test_images'
+    resultsFolder  = '/home/jim/HDDocuments/university/master/thesis/results'
+    
+    # Construct parser class
+    kp = kitti_parser(dataPath,drive,resultsFolder)
+    
+    # Example parameters
     x = [0., 1.458974, 2.63547244, 0.96564807, 2.21222542, 1.65225034, 0., 0., 1.,
          2.20176468, 2.40070779, 0.1750559,
          0.20347586, 6.54656438]
-
+    
+    # Get model results
     results = kp.get_model(x)
+    
+    # Save model results
     kp.save_model(x)

@@ -11,14 +11,15 @@ class combiner:
         self.herokuFile     = herokuFile
         self.appenFile      = appenFile
         self.resultsFolder  = resultsFolder
+        self.mergeDataFile = self.resultsFolder + 'filtered_responses/' + 'merged_data.csv'
         
-    def combine(self):
+    def combine(self,reportFormat = 'daniel'):
         # Create heroku and appen class
         h = heroku(self.herokuFile,self.resultsFolder)
         a = appen(self.appenFile,self.resultsFolder)
 
         # Find cheaters
-        a.find_cheaters('daniel') #'daniel' format or 'standard'
+        a.find_cheaters(reportFormat) #'daniel' format or 'standard'
 
         # Make CSV file of results
         appenUniqueFile, appenCheaterFile   = a.makeCSV()
@@ -42,8 +43,10 @@ class combiner:
                 del merge_data[key]
 
         # Save merged DataFrame as CSV
-        merge_data.to_csv(self.resultsFolder + 'filtered_responses/' + 'merged_data.csv')
+        
+        merge_data.to_csv(self.mergeDataFile)
         print('There are %s unique responses' %len(merge_data))
+        return appenUniqueFile, herokuResponseFile,self.mergeDataFile
 
 if __name__ == "__main__":
     herokuFile  = 'entries_1.json'
