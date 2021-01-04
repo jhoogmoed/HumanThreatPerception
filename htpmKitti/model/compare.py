@@ -97,7 +97,9 @@ class analyse:
         # Get correlation of first and last half
         r_fl = self.response_mean_first.corr(self.response_mean_last)
         r2_fl = r_fl*r_fl
+        # print('{:<25}'.format('autocorrelation') + ': R^2 =',f'{r2_fl:.5f}')
         print('{:<25}'.format('autocorrelation') + ': R^2 =',f'{r2_fl:.5f}')
+        
         
         # Plot correlation of first and last half
         self.plot_correlation(self.response_mean_first,self.response_mean_last,

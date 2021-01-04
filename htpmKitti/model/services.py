@@ -77,12 +77,21 @@ class kitti_parser:
         self.get_manual()
 
     def get_road(self):
+        self.par_city = []
+        self.par_residential = []
+        self.par_road = []
+        
         road_file = open(self.dataPath + self.drive +
                          '/uniform_image_list.txt', "r")
         lines = road_file.readlines()
         self.road_types = []
         for i in range(len(lines)):
-            self.road_types.append(lines[i].split('/')[0])
+            road = lines[i].split('/')[0]
+            self.road_types.append(road)
+            self.par_city.append((road == 'city')*1)
+            self.par_residential.append((road == 'residential')*1)
+            self.par_road.append((road == 'road')*1)
+            
 
     def get_objects(self):
         self.objectsList = []
@@ -264,7 +273,7 @@ class kitti_parser:
         probability_par = []
         for road in self.road_types:
             probability_par.append(self.roadSwitch(road, x))
-
+        
         return probability_par
 
     def get_model(self, x):
@@ -376,6 +385,9 @@ class kitti_parser:
         results['size_max'] = max_par_size
         results['size_min'] = min_par_size
         results['size_sum'] = sum_par_size
+        results['road_road']= self.par_road
+        results['road_residential'] = self.par_residential
+        results['road_city'] = self.par_city
 
         return results
 
