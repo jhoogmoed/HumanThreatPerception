@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from herokuFunctions import heroku
-from appenFunctions import appen
+from online.herokuFunctions import heroku
+from online.appenFunctions import appen
 
 class combiner:
     def __init__(self,herokuFile,appenFile,resultsFolder):

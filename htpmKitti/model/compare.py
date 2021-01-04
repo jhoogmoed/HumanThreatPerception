@@ -253,10 +253,10 @@ class analyse:
         plt.plot(x_s,linear_model_fn(x_s),color="red")
 
         # Save figure
-        plt.savefig(self.results_folder + 'correlation_images/' + parameter + '.png')        
+        plt.savefig(self.results_folder + 'correlation_images/' + parameter + '.png')  
+              
         
         
-
 if __name__ == "__main__":
     dataPath        = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
     drive           = '/test_images'
@@ -269,3 +269,4 @@ if __name__ == "__main__":
     analyse.info()
     analyse.split()
     analyse.model()
+    analyse.risk_ranking()
