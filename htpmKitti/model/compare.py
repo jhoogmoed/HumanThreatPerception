@@ -155,10 +155,12 @@ class analyse:
                                     str(parameter),'response_mean',parameter,round(r2,5))
         
         # Add mean response to correlation matrix
-        self.model_data['respone_mean'] = self.response_mean
+        self.model_data['response_mean'] = self.response_mean
 
         # Get correlation matrix
-        corrMatrix = self.model_data.corr()
+        corrMatrix = self.model_data.corr(method='pearson')
+
+        # corrMatrix = corrMatrix.sort_values(by='response_mean')
         
         # Remove uppper triangle
         mask = np.zeros_like(corrMatrix)
@@ -198,37 +200,141 @@ class analyse:
             i+=1
 
     def PCA(self):
-        images = os.listdir(self.dataPath + self.drive+ '/image_02/data/')
+        images = sorted(os.listdir(self.dataPath + self.drive+ '/image_02/data/'))
 
-        images_features = []
+        images_features_gray = []
+        images_features_blue = []
+        images_features_green = []
+        images_features_red = []
+        
         for image in images:
-            image_features = []
+            image_features_gray = []
+            image_features_blue = []
+            image_features_green = []
+            image_features_red = []
+            
             full_path = self.dataPath + self.drive+ '/image_02/data/' + image
             loaded_image = cv2.imread(full_path)
+
             gray = cv2.cvtColor(loaded_image, cv2.COLOR_BGR2GRAY)
-            gray_1_16 = cv2.resize(gray, (0, 0), fx=(1./16), fy=(1./16))
-            for horizontal in gray_1_16:
-                image_features = image_features + list(horizontal)
-            images_features.append(image_features)
+            blue = loaded_image[:,:,0]
+            green = loaded_image[:,:,1]
+            red  = loaded_image[:,:,2]
+            
+            scaling = 1./2
+            gray_scaled = cv2.resize(gray, (0, 0), fx=(scaling), fy=(scaling))
+            blue_scaled = cv2.resize(blue, (0, 0), fx=(scaling), fy=(scaling))
+            green_scaled = cv2.resize(green, (0, 0), fx=(scaling), fy=(scaling))
+            red_scaled = cv2.resize(red, (0, 0), fx=(scaling), fy=(scaling))
+            scaled_shape = gray_scaled.shape
+            
 
-        std_slc = StandardScaler()
-        X_std = std_slc.fit_transform(images_features)
+            for horizontal in gray_scaled:
+                image_features_gray = image_features_gray + list(horizontal)
+            images_features_gray.append(image_features_gray)
+            
+            for horizontal in blue_scaled:
+                image_features_blue = image_features_blue + list(horizontal)
+            images_features_blue.append(image_features_blue)
+            
+            for horizontal in green_scaled:
+                image_features_green = image_features_green + list(horizontal)
+            images_features_green.append(image_features_green)
+            
+            for horizontal in red_scaled:
+                image_features_red = image_features_red + list(horizontal)
+            images_features_red.append(image_features_red)
+        
+        
+        
+        # PCA decomposition
+        nc = 25
+        pca = decomposition.PCA(n_components=nc)
+        
+        std_gray = StandardScaler()
+        gray_std = std_gray.fit_transform(images_features_gray)
+        gray_pca = pca.fit_transform(gray_std)    
+        eigen_frames_gray = np.array(pca.components_.reshape((nc,scaled_shape[0],scaled_shape[1])))
+        
+        std_blue = StandardScaler()
+        blue_std = std_blue.fit_transform(images_features_blue)
+        blue_pca = pca.fit_transform(blue_std)   
+        eigen_frames_blue = np.array(pca.components_.reshape((nc,scaled_shape[0],scaled_shape[1])))
+        
+        std_green = StandardScaler()
+        green_std = std_green.fit_transform(images_features_green)
+        green_pca = pca.fit_transform(green_std)  
+        eigen_frames_green = np.array(pca.components_.reshape((nc,scaled_shape[0],scaled_shape[1])))
+        
+        std_red = StandardScaler()
+        red_std = std_red.fit_transform(images_features_red)
+        red_pca = pca.fit_transform(red_std)    
+        eigen_frames_red = np.array(pca.components_.reshape((nc,scaled_shape[0],scaled_shape[1])))        
+        
+             
+          
+           
+         
+        
+        # Back tranform for check
+        # back_transform = pca.inverse_transform(gray_pca)
+        # back_transform_renormalize = std_gray.inverse_transform(back_transform)
+        
+        # Show before and after
+        # first_image = np.array(images_features[0]).reshape(scaled_shape)
+        # cv2.imshow('Before PCA',first_image)
+        # cv2.waitKey(0)  
 
-        print(X_std.shape)
-        print(X_std)
+        # second_image = np.array(back_transform_renormalize[0]).reshape(scaled_shape)
+        # cv2.imshow('After PCA',second_image)
+        # cv2.waitKey(0)  
+        
+        
+        
+       
+ 
+        gray_pca_df = pd.DataFrame(gray_pca)
+        blue_pca_df = pd.DataFrame(blue_pca)
+        green_pca_df = pd.DataFrame(green_pca)
+        red_pca_df = pd.DataFrame(red_pca)
+        
+        for i in range(0,nc):
+            print('Feature: ',i)
+            print('Gray correlation: ', gray_pca_df[i].corr(self.response_mean))
+            print('Blue correlation: ', blue_pca_df[i].corr(self.response_mean))
+            print('Green correlation: ', green_pca_df[i].corr(self.response_mean))
+            print('Red correlation: ', red_pca_df[i].corr(self.response_mean))
+            max_pixel_gray = np.max(abs(eigen_frames_gray[i]))
+            max_pixel_blue = np.max(abs(eigen_frames_blue[i]))
+            max_pixel_green = np.max(abs(eigen_frames_green[i]))
+            max_pixel_red = np.max(abs(eigen_frames_red[i]))
+            # cv2.imshow(('Feature: '+str(i)+' Eigenface'),eigen_frames[i]* (1/max_pixel))
+            # cv2.waitKey(0)  
+            # cv2.imwrite(os.path.join(self.results_folder,'pca',('gray' + str(i)+'.png')),((eigen_frames_gray[i])*1/max_pixel_gray)*255)         
+            # cv2.imwrite(os.path.join(self.results_folder,'pca',('blue' + str(i)+'.png')),((eigen_frames[i])*1/max_pixel_blue)*255)      
+            # cv2.imwrite(os.path.join(self.results_folder,'pca',('green' + str(i)+'.png')),((eigen_frames[i])*1/max_pixel_green)*255)      
+            # cv2.imwrite(os.path.join(self.results_folder,'pca',('red' + str(i)+'.png')),((eigen_frames[i])*1/max_pixel_red)*255)      
+            gray_channel = eigen_frames_gray[i]*1/max_pixel_gray*255
+            blue_channel = eigen_frames_blue[i]*1/max_pixel_blue*255
+            green_channel = eigen_frames_green[i]*1/max_pixel_green*255
+            red_channel = eigen_frames_red[i]*1/max_pixel_red*255
+            
+            bgr_image = np.zeros((scaled_shape[0],scaled_shape[1],3)) 
+            bgr_image[:,:,0] = blue_channel
+            bgr_image[:,:,1] = green_channel
+            bgr_image[:,:,2] = red_channel
 
-        pca = decomposition.PCA(n_components=4)
+            cv2.imwrite(os.path.join(self.results_folder,'pca',('color ' + str(i)+'.png')),bgr_image)
+            cv2.imwrite(os.path.join(self.results_folder,'pca',('gray ' + str(i)+'.png')),gray_channel)
+            cv2.imwrite(os.path.join(self.results_folder,'pca',('blue ' + str(i)+'.png')),blue_channel)
+            cv2.imwrite(os.path.join(self.results_folder,'pca',('green' + str(i)+'.png')),green_channel)
+            cv2.imwrite(os.path.join(self.results_folder,'pca',('red ' + str(i)+'.png')),red_channel)
 
-        X_std_pca = pca.fit_transform(X_std)
+                                                                                                             
+            
+            
+            
 
-        print(X_std_pca.shape)
-        print(X_std_pca)
-
-        #1. load images as long lists of gray pixel values 
-        # self.dataPath + self.drive+ '/image_02/data/' +str(image)+ '.png'
-        # dataset = datasets.load_breast_cancer()
-
-        # print(self.response_mean)
     
     def plot_correlation(self,series1,series2,
                          std1 = None,
@@ -266,7 +372,9 @@ if __name__ == "__main__":
     
     analyse = analyse(dataPath,drive,mergedDataFile,modelDataFile,resultsFolder)
     analyse.get_responses()
-    analyse.info()
-    analyse.split()
-    analyse.model()
-    analyse.risk_ranking()
+    # analyse.info()
+    # analyse.split()
+    # analyse.model()
+    # analyse.risk_ranking()
+    analyse.PCA()
+    # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])

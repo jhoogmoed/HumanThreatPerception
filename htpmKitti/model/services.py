@@ -257,6 +257,8 @@ class kitti_parser:
                     imm = np.nan
                 else:
                     imm = a*(distance/velocity)**(1/b)
+                    if imm>50:
+                        imm = 50
 
                 # Save paremeter per object
                 all_imminence.append(imm)

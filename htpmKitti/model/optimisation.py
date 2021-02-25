@@ -32,9 +32,9 @@ params = {'type/car': 0.2,
           'type/tram': 0.4,
           'type/misc': 0,
           'type/dc': 0.1,
-          'prob/road': 0.1,
           'prob/city': 2,
           'prob/residential': 2,
+          'prob/road': 0.1,
           'imm/gain': 0.5,
           'imm/bias': 5}
 
@@ -56,7 +56,7 @@ def get_corr(results, data_range, print_bool = False):
     ranges = {'first': data.response_mean_first,
               'last': data.response_mean_last}
     r = {}
-    r['c'] = results['model_combination'].corr(ranges[data_range])
+    r['c'] = results['model_combination'].corr(ranges[data_range],'pearson')
     r['t'] = results['model_type'].corr(ranges[data_range])
     r['p'] = results['model_probability'].corr(ranges[data_range])
     r['i'] = results['model_imminence'].corr(ranges[data_range])
