@@ -280,18 +280,18 @@ class analyse:
         eigen_frames_red = np.array(pca.components_.reshape((nc,scaled_shape[0],scaled_shape[1])))        
          
         
-        # Back tranform for check
-        back_transform = pca.inverse_transform(gray_pca)
-        back_transform_renormalize = std_gray.inverse_transform(back_transform)
+        # # Back tranform for check
+        # back_transform = pca.inverse_transform(gray_pca)
+        # back_transform_renormalize = std_gray.inverse_transform(back_transform)
         
-        # Show before and after
-        first_image = np.array(images_features[0]).reshape(scaled_shape)
-        cv2.imshow('Before PCA',first_image)
-        cv2.waitKey(0)  
+        # # Show before and after
+        # first_image = np.array(images_features[0]).reshape(scaled_shape)
+        # cv2.imshow('Before PCA',first_image)
+        # cv2.waitKey(0)  
 
-        # second_image = np.array(back_transform_renormalize[0]).reshape(scaled_shape)
-        cv2.imshow('After PCA',second_image)
-        cv2.waitKey(0)  
+        # # second_image = np.array(back_transform_renormalize[0]).reshape(scaled_shape)
+        # cv2.imshow('After PCA',second_image)
+        # cv2.waitKey(0)  
         
         
         
