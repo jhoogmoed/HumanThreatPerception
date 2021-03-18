@@ -198,6 +198,13 @@ class analyse:
         for image in response_mean_sorted.index:
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'risk_sorted_images/' + '%s.png' %i)
             i+=1
+            
+            plt.clf()
+            plt.errorbar(series1, series2,std2,std1,linestyle = 'None', marker = '.',markeredgecolor = 'green')
+            plt.title(name1+ ' vs. ' + name2 +  " | R^2 = %s" %r2)
+            plt.xlabel(name1)
+            plt.ylabel(name2)
+        print(response_mean_sorted)
 
     def PCA(self):
         images = sorted(os.listdir(self.dataPath + self.drive+ '/image_02/data/'))
@@ -248,7 +255,8 @@ class analyse:
         
         
         # PCA decomposition
-        nc = 25
+        # nc = 25
+        nc = 50
         pca = decomposition.PCA(n_components=nc)
         
         std_gray = StandardScaler()
@@ -270,24 +278,20 @@ class analyse:
         red_std = std_red.fit_transform(images_features_red)
         red_pca = pca.fit_transform(red_std)    
         eigen_frames_red = np.array(pca.components_.reshape((nc,scaled_shape[0],scaled_shape[1])))        
-        
-             
-          
-           
          
         
         # Back tranform for check
-        # back_transform = pca.inverse_transform(gray_pca)
-        # back_transform_renormalize = std_gray.inverse_transform(back_transform)
+        back_transform = pca.inverse_transform(gray_pca)
+        back_transform_renormalize = std_gray.inverse_transform(back_transform)
         
         # Show before and after
-        # first_image = np.array(images_features[0]).reshape(scaled_shape)
-        # cv2.imshow('Before PCA',first_image)
-        # cv2.waitKey(0)  
+        first_image = np.array(images_features[0]).reshape(scaled_shape)
+        cv2.imshow('Before PCA',first_image)
+        cv2.waitKey(0)  
 
         # second_image = np.array(back_transform_renormalize[0]).reshape(scaled_shape)
-        # cv2.imshow('After PCA',second_image)
-        # cv2.waitKey(0)  
+        cv2.imshow('After PCA',second_image)
+        cv2.waitKey(0)  
         
         
         
@@ -330,11 +334,48 @@ class analyse:
             cv2.imwrite(os.path.join(self.results_folder,'pca',('green' + str(i)+'.png')),green_channel)
             cv2.imwrite(os.path.join(self.results_folder,'pca',('red ' + str(i)+'.png')),red_channel)
 
-                                                                                                             
-            
-            
-            
 
+    def risk_accidents(self):
+        # Get accident answers
+        accident_occurence = self.merge_data['how_many_accidents_were_you_involved_in_when_driving_a_car_in_the_last_3_years_please_include_all_accidents_regardless_of_how_they_were_caused_how_slight_they_were_or_where_they_happened']
+        
+        # Filter no responses
+        accident_occurence = [np.nan if value == 'i_prefer_not_to_respond' else value for value in accident_occurence]
+        accident_occurence = [6 if value == 'more_than_5' else value for value in accident_occurence]
+        accident_occurence = [value if value == np.nan else float(value) for value in accident_occurence]
+        
+        # Get corresponding average risk score
+        average_score = list(self.response_data.mean(axis=1))
+        risk_accidents = pd.DataFrame({'Accidents':accident_occurence,'Average_score':average_score})
+        print(risk_accidents)
+        r = risk_accidents.corr()
+        print(r)
+
+        # print(average_score)
+        
+        # print(accident_occurence)
+                                                                                                                    
+
+    def cronbach_alpha(self,df):    # 1. Transform the df into a correlation matrix
+        df_corr = df.corr()
+        
+        # 2.1 Calculate N
+        # The number of variables equals the number of columns in the df
+        N = df.shape[1]
+        
+        # 2.2 Calculate R
+        # For this, we'll loop through the columns and append every
+        # relevant correlation to an array calles "r_s". Then, we'll
+        # calculate the mean of "r_s"
+        rs = np.array([])
+        for i, col in enumerate(df_corr.columns):
+            sum_ = df_corr[col][i+1:].values
+            rs = np.append(sum_, rs)
+        mean_r = np.mean(rs)
+    
+    # 3. Use the formula to calculate Cronbach's Alpha 
+        cronbach_alpha = (N * mean_r) / (1 + (N - 1) * mean_r)
+        print(cronbach_alpha)
     
     def plot_correlation(self,series1,series2,
                          std1 = None,
@@ -372,9 +413,12 @@ if __name__ == "__main__":
     
     analyse = analyse(dataPath,drive,mergedDataFile,modelDataFile,resultsFolder)
     analyse.get_responses()
-    # analyse.info()
+    analyse.info()
     # analyse.split()
     # analyse.model()
     # analyse.risk_ranking()
     analyse.PCA()
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
+    # analyse.risk_accidents()
+    # analyse.cronbach_alpha(analyse.response_data)
+    
