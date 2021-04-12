@@ -29,14 +29,14 @@ params = {'type/car': 0.2,
           'type/ped': 1,
           'type/pedsit': 0.2,
           'type/cycl': 1,
-          'type/tram': 0.4,
-          'type/misc': 0,
-          'type/dc': 0.1,
-          'prob/city': 2,
-          'prob/residential': 2,
-          'prob/road': 0.1,
-          'imm/gain': 0.5,
-          'imm/bias': 5}
+          'type/tram': 0.6,
+          'type/misc': 0.2,
+          'type/dc': 0,
+          'prob/city': 3,
+          'prob/residential': 1.5,
+          'prob/road': 0,
+          'imm/gain': 1, 
+          'imm/bias': 0.5} #a*(distance/velocity)**(1/b)
 
 i = 0
 kp = kitti_parser(dataPath,drive,results_folder)

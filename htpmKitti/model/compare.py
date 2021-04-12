@@ -143,7 +143,7 @@ class analyse:
         
         for parameter in self.parameter_keys:
             # Get correlation
-            r2 = self.model_data[parameter].corr(self.response_mean)**2
+            r2 = self.model_data[parameter].corr(self.response_mean_last)**2
             
             # Print correlation
             print('{:<25}'.format(parameter) + ': R^2 =',f'{r2:.5f}')
@@ -155,7 +155,7 @@ class analyse:
                                     str(parameter),'response_mean',parameter,round(r2,5))
         
         # Add mean response to correlation matrix
-        self.model_data['response_mean'] = self.response_mean
+        self.model_data['response_mean_last'] = self.response_mean_last
 
         # Get correlation matrix
         corrMatrix = self.model_data.corr(method='pearson')
@@ -334,7 +334,6 @@ class analyse:
             cv2.imwrite(os.path.join(self.results_folder,'pca',('green' + str(i)+'.png')),green_channel)
             cv2.imwrite(os.path.join(self.results_folder,'pca',('red ' + str(i)+'.png')),red_channel)
 
-
     def risk_accidents(self):
         # Get accident answers
         accident_occurence = self.merge_data['how_many_accidents_were_you_involved_in_when_driving_a_car_in_the_last_3_years_please_include_all_accidents_regardless_of_how_they_were_caused_how_slight_they_were_or_where_they_happened']
@@ -355,7 +354,6 @@ class analyse:
         
         # print(accident_occurence)
                                                                                                                     
-
     def cronbach_alpha(self,df):    # 1. Transform the df into a correlation matrix
         df_corr = df.corr()
         
@@ -373,7 +371,7 @@ class analyse:
             rs = np.append(sum_, rs)
         mean_r = np.mean(rs)
     
-    # 3. Use the formula to calculate Cronbach's Alpha 
+        # 3. Use the formula to calculate Cronbach's Alpha 
         cronbach_alpha = (N * mean_r) / (1 + (N - 1) * mean_r)
         print(cronbach_alpha)
     
@@ -414,10 +412,10 @@ if __name__ == "__main__":
     analyse = analyse(dataPath,drive,mergedDataFile,modelDataFile,resultsFolder)
     analyse.get_responses()
     analyse.info()
-    # analyse.split()
-    # analyse.model()
+    analyse.split()
+    analyse.model()
     # analyse.risk_ranking()
-    analyse.PCA()
+    # analyse.PCA()
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
     # analyse.risk_accidents()
     # analyse.cronbach_alpha(analyse.response_data)
