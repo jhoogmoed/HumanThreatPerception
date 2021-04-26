@@ -421,7 +421,7 @@ if __name__ == "__main__":
     
     x = [0.2, 0.4, 0.6, 1., 0.2, 1., 0.6, 0.2, 0., 
               3., 1.5, 0., 
-              1., 0.5]
+              1., 0.1]
     
     # Get model results
     results = kp.get_model(x)

@@ -28,7 +28,7 @@ kp = services.kitti_parser(dataPath,drive,resultsFolder)
 
 # Start parameter weights
 x = [0.2, 0.4, 0.6, 1., 0.2, 1., 0.6, 0.2, 0., 
-              3., 1.5, 0., 
+              0.32, 0.32, 1.43, 
               1., 0.5]
 
 # Example parameter weights
@@ -46,4 +46,4 @@ analyse.info()
 analyse.split()
 analyse.model()
 # analyse.risky_images()
-# analyse.risk_ranking()
+analyse.risk_ranking()

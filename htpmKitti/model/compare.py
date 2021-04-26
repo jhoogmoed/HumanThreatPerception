@@ -11,6 +11,7 @@ import cv2
 from pandas.core.frame import DataFrame
 from sklearn import decomposition, datasets
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 
 class analyse:
     def __init__(self,dataPath,drive,mergedDataFile,modelDataFile,results_folder):   
@@ -49,17 +50,18 @@ class analyse:
         # Get normalized response
         self.response_normal = (self.response_data-self.response_mean.mean())/self.response_std.mean()
         
-        # Get researchers own responses
-        # self.response_own =      
+        # Save responses
+        response_data = pd.DataFrame(self.response_data)
+        response_data.to_csv(self.results_folder + 'filtered_responses/' + 'response_data.csv')   
     
     def find_outliers(self,thresh):
         # Find outliers
-        bad_indices = []
+        self.bad_indices = []
         for index in self.response_data.index:
             if(self.response_data.loc[index].std(skipna = True)<thresh):
-                bad_indices.append(index)
+                self.bad_indices.append(index)
                 self.response_data =self.response_data.drop(index)
-        
+      
     def info(self):
         # Get mean and std of responses
         self.response_mean   = self.response_data.mean(skipna = True)
@@ -105,6 +107,11 @@ class analyse:
         self.plot_correlation(self.response_mean_first,self.response_mean_last,
                               self.response_std_last,self.response_std_first,
                               'first_half','last_half','general_autocorrelation',round(r2_fl,5))
+        
+        # self.training_data = self.response_data
+        middle_frame = int(round(self.response_data.shape[1])/2)
+        self.data_training = self.response_data.iloc[:,0:middle_frame]
+        self.data_testing = self.response_data.iloc[:,middle_frame:self.response_data.shape[1]]     
         
     def random(self,useNorm=False,seed=100):
         # Chose usage of normalized data
@@ -193,20 +200,22 @@ class analyse:
             i+=1
                       
     def risk_ranking(self):
+        # Sort list of mean response values
         response_mean_sorted = self.response_mean.sort_values()
         i = 0
         for image in response_mean_sorted.index:
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'risk_sorted_images/' + '%s.png' %i)
+            i+=1            
+        
+        # Sort list of model combination values
+        response_model_sorted = pd.Series(self.model_data['model_combination']).sort_values()
+        i = 0
+        for image in response_model_sorted.index:
+            shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' + str(image)+ '.png', self.results_folder +'risk_sorted_images/model' + '%s.png' %i)
             i+=1
-            
-            plt.clf()
-            plt.errorbar(series1, series2,std2,std1,linestyle = 'None', marker = '.',markeredgecolor = 'green')
-            plt.title(name1+ ' vs. ' + name2 +  " | R^2 = %s" %r2)
-            plt.xlabel(name1)
-            plt.ylabel(name2)
-        print(response_mean_sorted)
 
     def PCA(self):
+        print("Starting PCA analysis")
         images = sorted(os.listdir(self.dataPath + self.drive+ '/image_02/data/'))
 
         images_features_gray = []
@@ -255,8 +264,10 @@ class analyse:
         
         
         # PCA decomposition
+        print("Running decomposition")
+        nc = 14 # number of model variables
         # nc = 25
-        nc = 50
+        # nc = 50
         pca = decomposition.PCA(n_components=nc)
         
         std_gray = StandardScaler()
@@ -302,6 +313,9 @@ class analyse:
         green_pca_df = pd.DataFrame(green_pca)
         red_pca_df = pd.DataFrame(red_pca)
         
+        self.pca = gray_pca_df
+        
+        print("Saving images")
         for i in range(0,nc):
             print('Feature: ',i)
             print('Gray correlation: ', gray_pca_df[i].corr(self.response_mean))
@@ -333,6 +347,25 @@ class analyse:
             cv2.imwrite(os.path.join(self.results_folder,'pca',('blue ' + str(i)+'.png')),blue_channel)
             cv2.imwrite(os.path.join(self.results_folder,'pca',('green' + str(i)+'.png')),green_channel)
             cv2.imwrite(os.path.join(self.results_folder,'pca',('red ' + str(i)+'.png')),red_channel)
+            
+    def multivariate_regression(self):
+        # train = pd.DataFrame(self.pca, columns= ['0','1','2','3','4','5','6','7','8','9','10','11','12','13'])
+        middle = int(round(len(self.pca)/2))
+        
+        
+        train = self.pca.iloc[0:middle]
+        test = self.pca.iloc[middle:len(self.pca)]
+        lr = LinearRegression()
+        
+        print("Fitting regression model")
+        lr.fit(train,self.response_mean[0:middle])
+        predictions = lr.predict(test)   
+        # print(predictions)
+        # print(self.response_mean[middle:len(self.response_mean)])
+        
+        self.plot_correlation(predictions,self.response_mean[middle:len(self.response_mean)],name1="PCA prediction",name2="Response mean 2nd half",parameter="regression_pca")
+        print(lr.coef_)
+        
 
     def risk_accidents(self):
         # Get accident answers
@@ -346,15 +379,20 @@ class analyse:
         # Get corresponding average risk score
         average_score = list(self.response_data.mean(axis=1))
         risk_accidents = pd.DataFrame({'Accidents':accident_occurence,'Average_score':average_score})
-        print(risk_accidents)
+        # print(risk_accidents)
         r = risk_accidents.corr()
         print(r)
-
+        
+        
+        
         # print(average_score)
         
         # print(accident_occurence)
+        
+        risk_accidents.to_csv(self.results_folder + 'filtered_responses/' + 'risk_accidents.csv')
                                                                                                                     
-    def cronbach_alpha(self,df):    # 1. Transform the df into a correlation matrix
+    def cronbach_alpha(self,df):    
+        # 1. Transform the df into a correlation matrix
         df_corr = df.corr()
         
         # 2.1 Calculate N
@@ -411,12 +449,16 @@ if __name__ == "__main__":
     
     analyse = analyse(dataPath,drive,mergedDataFile,modelDataFile,resultsFolder)
     analyse.get_responses()
+    
     analyse.info()
+    # analyse.find_outliers(10)
     analyse.split()
-    analyse.model()
+    analyse.risk_accidents()
+    # analyse.model()
     # analyse.risk_ranking()
     # analyse.PCA()
+    # analyse.multivariate_regression()
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
-    # analyse.risk_accidents()
+    
     # analyse.cronbach_alpha(analyse.response_data)
     
