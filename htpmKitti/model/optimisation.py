@@ -81,36 +81,35 @@ def get_corr(result, data_range, print_bool = False):
 # x0 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 x0 = list(params.values())
 
-# bnds = ((0, 10), (0, 10), (0, 10), (0, 10), (0, 10),
-#         (0, 10), (0, 10), (0, 10), (0, 10),
-#         (0, 10), (0, 10), (0, 10),
-#         (0, 10), (0, 10))
+bnds = ((0, 10), (0, 10), (0, 10), (0, 10), (0, 10),
+        (0, 10), (0, 10), (0, 10), (0, 10),
+        (0, 10), (0, 10), (0, 10),
+        (0, 10), (0, 10))
 
-bnds = ((-100, 100), (-100, 100), (-100, 100), (-100, 100), (-100, 100),
-        (-100, 100), (-100, 100), (-100, 100), (-100, 100),
-        (-100, 100), (-100, 100), (-100, 100),
-        (-100, 100), (0, 100))
+# bnds = ((-100, 100), (-100, 100), (-100, 100), (-100, 100), (-100, 100),
+#         (-100, 100), (-100, 100), (-100, 100), (-100, 100),
+#         (-100, 100), (-100, 100), (-100, 100),
+#         (-100, 100), (0, 100))
 
 
 # Broyden-Fletcher-Goldfarb-Shanno method
 # res = minimize(get_correlation, x0, method='TNC', bounds=bnds, options={
 #                'disp': True, 'maxfun': None, 'ftol': 1e-9, 'gtol': 1e-9})
-
 # res = minimize(get_correlation, list(params.values()), method='L-BFGS-B',bounds=bnds,options={'disp': True}) #
-# res = minimize(get_correlation, x0, method='BFGS',options={'disp': True}) #
+
 
 # Basinhopper method
 # minimizer_kwargs = {"method": "L-BFGS-B",'bounds':bnds,'options':{'maxfun': 100000,'ftol': 1e-8,'gtol': 1e-8}}
-# minimizer_kwargs = {"method" : "Nelder-Mead",'options':{'disp':True}}
 # res = optimize.basinhopping(get_correlation, x0,minimizer_kwargs=minimizer_kwargs,disp=True)#,accept_test=mybounds
-res = optimize.differential_evolution(get_correlation,bnds,disp=True,strategy="best1exp")
+
+# Differential evolution method
+res = optimize.differential_evolution(get_correlation,bnds,disp=True,strategy="best1exp",popsize=20)
 # res = optimize.shgo(get_correlation,bnds,options={'disp':True})
 
 # Nelde Mead method
 # res = minimize(get_correlation,x0 ,method='Nelder-Mead',options={'disp': True})
 
-
-# SHGO
+# SHGO method
 # minimizer_kwargs = {"method": "L-BFGS-B"}
 # res = optimize.shgo(get_correlation,bnds, n=1000,minimizer_kwargs=minimizer_kwargs,sampling_method='simplicial',options={'disp': True})
 

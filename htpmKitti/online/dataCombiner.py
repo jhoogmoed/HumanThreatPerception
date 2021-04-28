@@ -43,9 +43,10 @@ class combiner:
                 del merge_data[key]
 
         # Save merged DataFrame as CSV
-        
         merge_data.to_csv(self.mergeDataFile)
         print('There are %s unique responses' %len(merge_data))
+        
+        # Save anonymous data to CSV
         return appenUniqueFile, herokuResponseFile,self.mergeDataFile
 
 if __name__ == "__main__":

@@ -53,6 +53,17 @@ class analyse:
         # Save responses
         response_data = pd.DataFrame(self.response_data)
         response_data.to_csv(self.results_folder + 'filtered_responses/' + 'response_data.csv')   
+        
+        # Get anonymous data
+        survey_data = pd.DataFrame(self.merge_data.loc[:,'about_how_many_kilometers_miles_did_you_drive_in_the_last_12_months':'which_input_device_are_you_using_now'])  
+        survey_data.index = survey_data['Meta:worker_code']
+        survey_data.pop('Meta:worker_code')
+        survey_data.merge(response_data,on='Meta:worker_code')
+        
+        
+        survey_data.to_csv(self.results_folder + 'filtered_responses/' + 'survey_data.csv')  
+        # print(survey_data)
+
     
     def find_outliers(self,thresh):
         # Find outliers
@@ -172,20 +183,28 @@ class analyse:
         # Remove uppper triangle
         mask = np.zeros_like(corrMatrix)
         mask[np.triu_indices_from(mask,k=1)] = True
-        
+    
         # Plot correlation matrix
-        plt.clf()
-        sn.heatmap(corrMatrix,vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True)       
-        plt.show()
+        if (plotBool==True):
+            plt.clf()
+            sn.heatmap(corrMatrix,vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True)       
+            plt.show()
+        else:
+            pass
         
         r = self.model_data['model_combination'].corr(self.response_mean)
         return r**2
 
-    def risky_images(self):
+    def risky_images(self,model=False):
         # Get most risky and least risky images
-        response_mean_sorted = self.response_mean.sort_values()
-        least_risky = response_mean_sorted.index[0:5]
-        most_risky = response_mean_sorted.tail(5).index[::-1]
+        if (model==True):
+            response_mean_sorted = self.model_data['model_combination'].sort_values()
+            least_risky = response_mean_sorted.index[0:5]
+            most_risky = response_mean_sorted.tail(5).index[::-1]
+        else:
+            response_mean_sorted = self.response_mean.sort_values()
+            least_risky = response_mean_sorted.index[0:5]
+            most_risky = response_mean_sorted.tail(5).index[::-1]
 
         # Save most and least risky images
         i = 1
@@ -350,23 +369,35 @@ class analyse:
             
     def multivariate_regression(self):
         # train = pd.DataFrame(self.pca, columns= ['0','1','2','3','4','5','6','7','8','9','10','11','12','13'])
-        middle = int(round(len(self.pca)/2))
         
         
-        train = self.pca.iloc[0:middle]
-        test = self.pca.iloc[middle:len(self.pca)]
-        lr = LinearRegression()
         
+        # train = self.pca.iloc[0:middle]
+        # test = self.pca.iloc[middle:len(self.pca)]
+        
+        
+        lr = LinearRegression(normalize=True)
+        predictor_keys = ['general_velocity','general_distance_mean','general_number_bjects','manual_breaklight','occluded_mean']
+        # Gives [-0.72019598  0.01313145  0.4194316   1.00940873  0.15811158]
+        # predictors = self.model_data[predictor_keys]
+        predictors = self.model_data
+        middle = int(round(predictors.shape[0]/2))
+        
+        # print(predictors)
         print("Fitting regression model")
-        lr.fit(train,self.response_mean[0:middle])
-        predictions = lr.predict(test)   
-        # print(predictions)
-        # print(self.response_mean[middle:len(self.response_mean)])
+        lr.fit(predictors[0:middle],self.response_mean[0:middle])
         
-        self.plot_correlation(predictions,self.response_mean[middle:len(self.response_mean)],name1="PCA prediction",name2="Response mean 2nd half",parameter="regression_pca")
+        # print(predictors[0:middle])
+        # print(predictors[middle:predictors.shape[0]])
+        predictions = lr.predict(predictors[middle:predictors.shape[0]])   
+        print(predictions)
+        print(self.response_mean[middle:len(self.response_mean)])
+        
+        r = np.corrcoef(self.response_mean[middle:predictors.shape[0]],predictions)[0,1]
+        print ('Correlation = {}'.format(r))
+        self.plot_correlation(predictions,self.response_mean[middle:len(self.response_mean)],name1="Multivariate regression",name2="Response test",parameter="regression_multivariate",r2 = round(r**2,5))
         print(lr.coef_)
-        
-
+         
     def risk_accidents(self):
         # Get accident answers
         accident_occurence = self.merge_data['how_many_accidents_were_you_involved_in_when_driving_a_car_in_the_last_3_years_please_include_all_accidents_regardless_of_how_they_were_caused_how_slight_they_were_or_where_they_happened']
@@ -453,8 +484,9 @@ if __name__ == "__main__":
     analyse.info()
     # analyse.find_outliers(10)
     analyse.split()
-    analyse.risk_accidents()
-    # analyse.model()
+    # analyse.risk_accidents()
+    analyse.model(plotBool=False)
+    analyse.risky_images(model=True)
     # analyse.risk_ranking()
     # analyse.PCA()
     # analyse.multivariate_regression()
