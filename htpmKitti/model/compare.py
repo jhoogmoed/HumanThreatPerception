@@ -4,6 +4,7 @@ import shutil
 import numpy as np
 import random
 import pandas as pd
+from pandas.core.accessor import delegate_names
 import seaborn as sn
 import matplotlib.pyplot as plt
 import cv2
@@ -25,6 +26,7 @@ class analyse:
 
         # Load data
         self.merge_data = pd.read_csv(mergedDataFile)
+        print('Created analyse class')
          
     def get_responses(self):
         # Get response per frame
@@ -58,13 +60,13 @@ class analyse:
         survey_data = pd.DataFrame(self.merge_data.loc[:,'about_how_many_kilometers_miles_did_you_drive_in_the_last_12_months':'which_input_device_are_you_using_now'])  
         survey_data.index = survey_data['Meta:worker_code']
         survey_data.pop('Meta:worker_code')
-        survey_data.merge(response_data,on='Meta:worker_code')
+        self.survey_data = survey_data.join(response_data)
         
         
-        survey_data.to_csv(self.results_folder + 'filtered_responses/' + 'survey_data.csv')  
+        self.survey_data.to_csv(self.results_folder + 'filtered_responses/' + 'survey_data.csv')  
         # print(survey_data)
+        print('Got responses')
 
-    
     def find_outliers(self,thresh):
         # Find outliers
         self.bad_indices = []
@@ -72,6 +74,7 @@ class analyse:
             if(self.response_data.loc[index].std(skipna = True)<thresh):
                 self.bad_indices.append(index)
                 self.response_data =self.response_data.drop(index)
+        print('Found outliers')
       
     def info(self):
         # Get mean and std of responses
@@ -82,6 +85,8 @@ class analyse:
         self.data_description = self.response_data.describe()
         self.data_description.to_csv(self.results_folder + 'filtered_responses/' + 'self.data_description.csv')
         # print(self.data_description)
+        
+        print('Got info')
 
     def split(self,useNorm = False):
         # Chose usage of normalized data
@@ -111,7 +116,7 @@ class analyse:
         r_fl = self.response_mean_first.corr(self.response_mean_last)
         r2_fl = r_fl*r_fl
         # print('{:<25}'.format('autocorrelation') + ': R^2 =',f'{r2_fl:.5f}')
-        print('{:<25}'.format('autocorrelation') + ': R^2 =',f'{r2_fl:.5f}')
+        # print('{:<25}'.format('autocorrelation') + ': R^2 =',f'{r2_fl:.5f}')
         
         
         # Plot correlation of first and last half
@@ -123,6 +128,8 @@ class analyse:
         middle_frame = int(round(self.response_data.shape[1])/2)
         self.data_training = self.response_data.iloc[:,0:middle_frame]
         self.data_testing = self.response_data.iloc[:,middle_frame:self.response_data.shape[1]]     
+        
+        print('Split data')
         
     def random(self,useNorm=False,seed=100):
         # Chose usage of normalized data
@@ -149,6 +156,8 @@ class analyse:
         self.plot_correlation(self.single_response,data_response_mean,
                               data_response_std,[],
                               ('Person n'+str(random_person)),'Response mean','random',r2_sm) 
+        
+        print('Got random correlation')
 
     def model(self,plotBool=True):
         self.model_data = pd.read_csv(self.results_folder + 'model_responses/' + self.modelDataFile)
@@ -164,7 +173,7 @@ class analyse:
             r2 = self.model_data[parameter].corr(self.response_mean_last)**2
             
             # Print correlation
-            print('{:<25}'.format(parameter) + ': R^2 =',f'{r2:.5f}')
+            # print('{:<25}'.format(parameter) + ': R^2 =',f'{r2:.5f}')
             
             # Save figure correlation
             if plotBool == True:
@@ -189,11 +198,14 @@ class analyse:
             plt.clf()
             sn.heatmap(corrMatrix,vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True)       
             plt.show()
+            print('Got model data and correlations')
         else:
             pass
         
         r = self.model_data['model_combination'].corr(self.response_mean)
+        
         return r**2
+    
 
     def risky_images(self,model=False):
         # Get most risky and least risky images
@@ -217,6 +229,8 @@ class analyse:
             # os.path.join(self.dataPath + self.drive + '/image_02/data')
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' +str(image)+ '.png', self.results_folder +'most_least_risky_images/' +'most_risky_%s.png' %i)
             i+=1
+        
+        print('Got risky images')
                       
     def risk_ranking(self):
         # Sort list of mean response values
@@ -233,6 +247,7 @@ class analyse:
             shutil.copyfile(self.dataPath+ self.drive+ '/image_02/data/' + str(image)+ '.png', self.results_folder +'risk_sorted_images/model' + '%s.png' %i)
             i+=1
 
+        print('Ranked images on risk')
     def PCA(self):
         print("Starting PCA analysis")
         images = sorted(os.listdir(self.dataPath + self.drive+ '/image_02/data/'))
@@ -367,6 +382,8 @@ class analyse:
             cv2.imwrite(os.path.join(self.results_folder,'pca',('green' + str(i)+'.png')),green_channel)
             cv2.imwrite(os.path.join(self.results_folder,'pca',('red ' + str(i)+'.png')),red_channel)
             
+        print('Performed PCA')
+            
     def multivariate_regression(self):
         # train = pd.DataFrame(self.pca, columns= ['0','1','2','3','4','5','6','7','8','9','10','11','12','13'])
         
@@ -374,7 +391,6 @@ class analyse:
         
         # train = self.pca.iloc[0:middle]
         # test = self.pca.iloc[middle:len(self.pca)]
-        
         
         lr = LinearRegression(normalize=True)
         predictor_keys = ['general_velocity','general_distance_mean','general_number_bjects','manual_breaklight','occluded_mean']
@@ -397,30 +413,123 @@ class analyse:
         print ('Correlation = {}'.format(r))
         self.plot_correlation(predictions,self.response_mean[middle:len(self.response_mean)],name1="Multivariate regression",name2="Response test",parameter="regression_multivariate",r2 = round(r**2,5))
         print(lr.coef_)
+        
+        print('Performed multivariate regression')
          
-    def risk_accidents(self):
+    def risk_accidents(self,plotBool=False):
         # Get accident answers
         accident_occurence = self.merge_data['how_many_accidents_were_you_involved_in_when_driving_a_car_in_the_last_3_years_please_include_all_accidents_regardless_of_how_they_were_caused_how_slight_they_were_or_where_they_happened']
         
         # Filter no responses
-        accident_occurence = [np.nan if value == 'i_prefer_not_to_respond' else value for value in accident_occurence]
+        accident_occurence = [-1 if value == 'i_prefer_not_to_respond' else value for value in accident_occurence]
         accident_occurence = [6 if value == 'more_than_5' else value for value in accident_occurence]
         accident_occurence = [value if value == np.nan else float(value) for value in accident_occurence]
         
-        # Get corresponding average risk score
+        # Group by accidents
+        n_bins = 20
+        bins = np.linspace(0,100,n_bins+1)
+        binned = []
+        
+        for value in self.response_data.mean(axis=1):
+            for b in bins:
+                if (value <= b):
+                    binned.append(b)
+                    # print("Value:{} < bin:{}".format(value,b))
+                    break
+        
+        # Get accident occurence
         average_score = list(self.response_data.mean(axis=1))
         risk_accidents = pd.DataFrame({'Accidents':accident_occurence,'Average_score':average_score})
-        # print(risk_accidents)
-        r = risk_accidents.corr()
-        print(r)
+        r = risk_accidents.corr().values[0,1]
+        self.plot_correlation(pd.Series(accident_occurence),pd.Series(average_score),name2='Accidents',name1='Average score',parameter='Risk accidents',r2=r**2)
+        
+        risk_accidents_grouped = []
+        for i in range(8):
+            risk_accidents_grouped.append([])
+        for i in range(len(accident_occurence)):
+            # print('i = {}, and value = {}'.format(i,close_occurence[i]))
+            risk_accidents_grouped[int(accident_occurence[i])].append(average_score[i])
+        
+        # Risk close riding
+        close_occurence = self.merge_data['how_often_do_you_do_the_following_driving_so_close_to_the_car_in_front_that_it_would_be_difficult_to_stop_in_an_emergency']
+        
+        # Filter no responses
+        close_occurence = [0 if value == 'i_prefer_not_to_respond' else value for value in close_occurence]
+        close_occurence = [1 if value == '0_times_per_month' else value for value in close_occurence]
+        close_occurence = [2 if value == '1_to_3_times_per_month' else value for value in close_occurence]
+        close_occurence = [3 if value == '4_to_6_times_per_month' else value for value in close_occurence]
+        close_occurence = [4 if value == '7_to_9_times_per_month' else value for value in close_occurence]
+        close_occurence = [5 if value == '10_or_more_times_per_month' else value for value in close_occurence]
+        close_occurence = [value if value == np.nan else float(value) for value in close_occurence]
         
         
+        close_occurence_grouped = []
+        for i in range(6):
+            close_occurence_grouped.append([])
+        for i in range(len(close_occurence)):
+            close_occurence_grouped[int(close_occurence[i])].append(average_score[i])
         
-        # print(average_score)
         
-        # print(accident_occurence)
+        # Disregard speedlimit
+        speed_occurence = self.merge_data['how_often_do_you_do_the_following_disregarding_the_speed_limit_on_a_residential_road']
         
+        # Filter no response
+        speed_occurence = [0 if value == 'i_prefer_not_to_respond' else value for value in speed_occurence]
+        speed_occurence = [1 if value == '0_times_per_month' else value for value in speed_occurence]
+        speed_occurence = [2 if value == '1_to_3_times_per_month' else value for value in speed_occurence]
+        speed_occurence = [3 if value == '4_to_6_times_per_month' else value for value in speed_occurence]
+        speed_occurence = [4 if value == '7_to_9_times_per_month' else value for value in speed_occurence]
+        speed_occurence = [5 if value == '10_or_more_times_per_month' else value for value in speed_occurence]
+        speed_occurence = [value if value == np.nan else float(value) for value in speed_occurence]
+        
+        
+        speed_occurence_grouped = []
+        for i in range(6):
+            speed_occurence_grouped.append([])
+        for i in range(len(speed_occurence)):
+            speed_occurence_grouped[int(speed_occurence[i])].append(average_score[i])
+            
         risk_accidents.to_csv(self.results_folder + 'filtered_responses/' + 'risk_accidents.csv')
+        
+        if plotBool:
+            plt.figure()
+            plt.boxplot(risk_accidents_grouped, labels=['no reply','0','1','2','3','4','5','more than 5'])                
+            plt.title("Accident risk")
+            plt.xlabel("Accident occurence")
+            plt.ylabel("Risk score")
+            plt.savefig(self.results_folder + 'survey_images/' + 'risk_accidents_box' + '.png')  
+            
+            plt.figure()
+            plt.boxplot(close_occurence_grouped,labels=['no reply','0','1-3','4-6','7-9','10 or more'])                
+            plt.title("Close proximity driving risk")
+            plt.xlabel("Accident occurence")
+            plt.ylabel("Risk score")
+            plt.savefig(self.results_folder + 'survey_images/' + 'close_occurence_box' + '.png')  
+            
+            plt.figure()
+            plt.boxplot(speed_occurence_grouped,labels=['no reply','0','1-3','4-6','7-9','10 or more'])                
+            plt.title("Speed disregard driving risk")
+            plt.xlabel("Accident occurence")
+            plt.ylabel("Risk score")
+            plt.savefig(self.results_folder + 'survey_images/' + 'speed_occurence_box' + '.png')  
+            
+            plt.figure()
+            plt.hist(average_score,bins=n_bins,rwidth=0.9)
+            plt.title("Average score responses")
+            plt.xlabel("Average risk score")
+            plt.ylabel("Occurences")
+            plt.savefig(self.results_folder + 'survey_images/' + 'avg_response' + '.png')  
+            
+            # plt.show()
+            
+            # plt.figure()
+            # plt.hist2d(accident_occurence,average_score,alpha=0.9)
+            # plt.title("Accident risk")
+            # plt.xlabel("Accident occurence")
+            # plt.ylabel("Risk score")
+        print('Saved survey images')
+        
+        
                                                                                                                     
     def cronbach_alpha(self,df):    
         # 1. Transform the df into a correlation matrix
@@ -443,7 +552,8 @@ class analyse:
         # 3. Use the formula to calculate Cronbach's Alpha 
         cronbach_alpha = (N * mean_r) / (1 + (N - 1) * mean_r)
         print(cronbach_alpha)
-    
+        print('Calculated cronbach alpha')      
+        
     def plot_correlation(self,series1,series2,
                          std1 = None,
                          std2 = None,
@@ -485,8 +595,9 @@ if __name__ == "__main__":
     # analyse.find_outliers(10)
     analyse.split()
     # analyse.risk_accidents()
-    analyse.model(plotBool=False)
-    analyse.risky_images(model=True)
+    # analyse.model(plotBool=False)
+    # analyse.risky_images(model=True)
+    analyse.risk_accidents(True)
     # analyse.risk_ranking()
     # analyse.PCA()
     # analyse.multivariate_regression()
