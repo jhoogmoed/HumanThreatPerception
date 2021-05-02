@@ -181,18 +181,66 @@ class analyse:
                                     None,self.response_std,
                                     str(parameter),'response_mean',parameter,round(r2,5))
         
+        # Check model cronbach alpha
+        # self.cronbach_alpha(self.model_data[['model_type',  'model_imminence',  'model_probability']])
+        
+        # Number of params
+        n = len(self.parameter_keys)
+        
         # Add mean response to correlation matrix
         self.model_data['response_mean_last'] = self.response_mean_last
 
         # Get correlation matrix
         corrMatrix = self.model_data.corr(method='pearson')
-
         # corrMatrix = corrMatrix.sort_values(by='response_mean')
         
         # Remove uppper triangle
         mask = np.zeros_like(corrMatrix)
         mask[np.triu_indices_from(mask,k=1)] = True
-    
+        
+
+        # Get eigenvalues and vectors
+        v = np.linalg.eig(corrMatrix.iloc[0:n,0:n])
+        
+        v_sum = np.sum(v[0])
+        v_csum = np.cumsum(v[0])
+        v_ccurve = v_csum/v_sum
+        v_cutoff = len(v_ccurve[(v_ccurve<=0.9)])+1
+        # print(v_cutoff)
+        plt.clf()
+        plt.plot(v[0])
+        plt.plot(np.ones(len(v[0])))
+        plt.title('Scree plot')
+        plt.xlabel('Component')
+        plt.ylabel('Eigenvalue')        
+        
+        # Save figure
+        plt.savefig(self.results_folder + 'regression/' + 'scree_plot' + '.png')  
+        
+        # Get significant params
+        p_keys = self.model_data.keys()[0:n]
+        
+        significant_parameters = set([])
+
+        for column in range(0,v_cutoff-9):
+            for row in range(0,n):
+                if (abs(v[1][row,column]) >= 0.2):
+                    if (row <= 3):
+                        pass
+                    else:
+                        significant_parameters.add(p_keys[row])
+                
+        self.sig_params = list(significant_parameters)
+        
+        # Get eigenvector heatmap
+        # plt.clf()
+        # sn.heatmap(v[1],vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True,yticklabels=p_keys)       
+        # plt.show()
+        
+        # Save figure
+        # plt.savefig(self.results_folder + 'regression/' + 'eigenvector_matrix' + '.png') 
+
+        
         # Plot correlation matrix
         if (plotBool==True):
             plt.clf()
@@ -206,17 +254,16 @@ class analyse:
         
         return r**2
     
-
     def risky_images(self,model=False):
         # Get most risky and least risky images
         if (model==True):
-            response_mean_sorted = self.model_data['model_combination'].sort_values()
-            least_risky = response_mean_sorted.index[0:5]
-            most_risky = response_mean_sorted.tail(5).index[::-1]
+            response_model_sorted = self.model_data['model_combination'].sort_values()
+            least_risky = response_model_sorted.index[0:5]
+            most_risky = response_model_sorted.tail(5).index[::-1]
         else:
-            response_mean_sorted = self.response_mean.sort_values()
-            least_risky = response_mean_sorted.index[0:5]
-            most_risky = response_mean_sorted.tail(5).index[::-1]
+            response_model_sorted = self.response_mean.sort_values()
+            least_risky = response_model_sorted.index[0:5]
+            most_risky = response_model_sorted.tail(5).index[::-1]
 
         # Save most and least risky images
         i = 1
@@ -248,6 +295,7 @@ class analyse:
             i+=1
 
         print('Ranked images on risk')
+    
     def PCA(self):
         print("Starting PCA analysis")
         images = sorted(os.listdir(self.dataPath + self.drive+ '/image_02/data/'))
@@ -299,7 +347,7 @@ class analyse:
         
         # PCA decomposition
         print("Running decomposition")
-        nc = 14 # number of model variables
+        nc = 15 # number of model variables
         # nc = 25
         # nc = 50
         pca = decomposition.PCA(n_components=nc)
@@ -384,7 +432,7 @@ class analyse:
             
         print('Performed PCA')
             
-    def multivariate_regression(self):
+    def multivariate_regression(self,pred='default'):
         # train = pd.DataFrame(self.pca, columns= ['0','1','2','3','4','5','6','7','8','9','10','11','12','13'])
         
         
@@ -393,27 +441,33 @@ class analyse:
         # test = self.pca.iloc[middle:len(self.pca)]
         
         lr = LinearRegression(normalize=True)
-        predictor_keys = ['general_velocity','general_distance_mean','general_number_bjects','manual_breaklight','occluded_mean']
-        # Gives [-0.72019598  0.01313145  0.4194316   1.00940873  0.15811158]
-        # predictors = self.model_data[predictor_keys]
-        predictors = self.model_data
+        if (pred == 'default'):
+            predictor_keys = ['general_velocity','general_distance_mean','general_number_bjects','manual_breaklight','occluded_mean']
+        elif(pred == 'sig'):
+            predictor_keys = self.sig_params
+        elif(pred == 'all'):
+            predictor_keys = self.model_data.keys()
+        else:
+            print('Wrong input, changing to default')
+            predictor_keys = ['general_velocity','general_distance_mean','general_number_bjects','manual_breaklight','occluded_mean']
+            
+        predictors = self.model_data[predictor_keys]
+            
         middle = int(round(predictors.shape[0]/2))
         
-        # print(predictors)
+        # Fit regression
         print("Fitting regression model")
+        print(self.sig_params)
         lr.fit(predictors[0:middle],self.response_mean[0:middle])
-        
-        # print(predictors[0:middle])
-        # print(predictors[middle:predictors.shape[0]])
         predictions = lr.predict(predictors[middle:predictors.shape[0]])   
-        print(predictions)
-        print(self.response_mean[middle:len(self.response_mean)])
-        
+
+        # Analyse result
         r = np.corrcoef(self.response_mean[middle:predictors.shape[0]],predictions)[0,1]
         print ('Correlation = {}'.format(r))
         self.plot_correlation(predictions,self.response_mean[middle:len(self.response_mean)],name1="Multivariate regression",name2="Response test",parameter="regression_multivariate",r2 = round(r**2,5))
-        print(lr.coef_)
+        print('Lr coef: {}'.format(lr.coef_))
         
+        self.cronbach_alpha(self.model_data[predictor_keys])
         print('Performed multivariate regression')
          
     def risk_accidents(self,plotBool=False):
@@ -441,7 +495,7 @@ class analyse:
         average_score = list(self.response_data.mean(axis=1))
         risk_accidents = pd.DataFrame({'Accidents':accident_occurence,'Average_score':average_score})
         r = risk_accidents.corr().values[0,1]
-        self.plot_correlation(pd.Series(accident_occurence),pd.Series(average_score),name2='Accidents',name1='Average score',parameter='Risk accidents',r2=r**2)
+        self.plot_correlation(pd.Series(accident_occurence),pd.Series(average_score),name2='Accidents',name1='Average score',parameter='risk_accidents',r2=round(r**2,5))
         
         risk_accidents_grouped = []
         for i in range(8):
@@ -468,6 +522,9 @@ class analyse:
             close_occurence_grouped.append([])
         for i in range(len(close_occurence)):
             close_occurence_grouped[int(close_occurence[i])].append(average_score[i])
+            
+        r = np.corrcoef(close_occurence,average_score)[0,1]
+        self.plot_correlation(pd.Series(close_occurence),pd.Series(average_score),name2='Close driving',name1='Average score',parameter='close_accidents',r2=round(r**2,5))
         
         
         # Disregard speedlimit
@@ -489,7 +546,33 @@ class analyse:
         for i in range(len(speed_occurence)):
             speed_occurence_grouped[int(speed_occurence[i])].append(average_score[i])
             
-        risk_accidents.to_csv(self.results_folder + 'filtered_responses/' + 'risk_accidents.csv')
+        r = np.corrcoef(speed_occurence,average_score)[0,1]
+        self.plot_correlation(pd.Series(speed_occurence),pd.Series(average_score),name2='Speeding',name1='Average score',parameter='speed_accidents',r2=round(r**2,5))
+            
+        # Disregard phone
+        phone_occurence = self.merge_data['how_often_do_you_do_the_following_using_a_mobile_phone_without_a_hands_free_kit']
+        
+        # Filter no response
+        phone_occurence = [0 if value == 'i_prefer_not_to_respond' else value for value in phone_occurence]
+        phone_occurence = [1 if value == '0_times_per_month' else value for value in phone_occurence]
+        phone_occurence = [2 if value == '1_to_3_times_per_month' else value for value in phone_occurence]
+        phone_occurence = [3 if value == '4_to_6_times_per_month' else value for value in phone_occurence]
+        phone_occurence = [4 if value == '7_to_9_times_per_month' else value for value in phone_occurence]
+        phone_occurence = [5 if value == '10_or_more_times_per_month' else value for value in phone_occurence]
+        phone_occurence = [value if value == np.nan else float(value) for value in phone_occurence]
+        
+        
+        phone_occurence_grouped = []
+        for i in range(6):
+            phone_occurence_grouped.append([])
+        for i in range(len(phone_occurence)):
+            phone_occurence_grouped[int(phone_occurence[i])].append(average_score[i])
+            
+        r = np.corrcoef(phone_occurence,average_score)[0,1]
+        self.plot_correlation(pd.Series(phone_occurence),pd.Series(average_score),name2='Phone driving',name1='Average score',parameter='phone_accidents',r2=round(r**2,5))
+        
+            
+        
         
         if plotBool:
             plt.figure()
@@ -501,17 +584,25 @@ class analyse:
             
             plt.figure()
             plt.boxplot(close_occurence_grouped,labels=['no reply','0','1-3','4-6','7-9','10 or more'])                
-            plt.title("Close proximity driving risk")
-            plt.xlabel("Accident occurence")
+            plt.title("Keeping distance driving risk")
+            plt.xlabel("Disregard occurence")
             plt.ylabel("Risk score")
             plt.savefig(self.results_folder + 'survey_images/' + 'close_occurence_box' + '.png')  
             
             plt.figure()
             plt.boxplot(speed_occurence_grouped,labels=['no reply','0','1-3','4-6','7-9','10 or more'])                
             plt.title("Speed disregard driving risk")
-            plt.xlabel("Accident occurence")
+            plt.xlabel("Disregard occurence")
             plt.ylabel("Risk score")
             plt.savefig(self.results_folder + 'survey_images/' + 'speed_occurence_box' + '.png')  
+            
+            plt.figure()
+            plt.boxplot(phone_occurence_grouped,labels=['no reply','0','1-3','4-6','7-9','10 or more'])                
+            plt.title("Handsfree disregard driving risk")
+            plt.xlabel("Disregard occurence")
+            plt.ylabel("Risk score")
+            plt.savefig(self.results_folder + 'survey_images/' + 'phone_occurence_box' + '.png')  
+            
             
             plt.figure()
             plt.hist(average_score,bins=n_bins,rwidth=0.9)
@@ -528,9 +619,7 @@ class analyse:
             # plt.xlabel("Accident occurence")
             # plt.ylabel("Risk score")
         print('Saved survey images')
-        
-        
-                                                                                                                    
+                                                                                                                          
     def cronbach_alpha(self,df):    
         # 1. Transform the df into a correlation matrix
         df_corr = df.corr()
@@ -551,7 +640,8 @@ class analyse:
     
         # 3. Use the formula to calculate Cronbach's Alpha 
         cronbach_alpha = (N * mean_r) / (1 + (N - 1) * mean_r)
-        print(cronbach_alpha)
+        # print(rs)
+        print('Cronbach alpha: {}'.format(cronbach_alpha))
         print('Calculated cronbach alpha')      
         
     def plot_correlation(self,series1,series2,
@@ -595,12 +685,12 @@ if __name__ == "__main__":
     # analyse.find_outliers(10)
     analyse.split()
     # analyse.risk_accidents()
-    # analyse.model(plotBool=False)
-    # analyse.risky_images(model=True)
-    analyse.risk_accidents(True)
+    analyse.model(plotBool=False)
+    # analyse.risky_images(model=False)
+    analyse.risk_accidents(plotBool=False)
     # analyse.risk_ranking()
     # analyse.PCA()
-    # analyse.multivariate_regression()
+    analyse.multivariate_regression(pred='sig')
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
     
     # analyse.cronbach_alpha(analyse.response_data)
