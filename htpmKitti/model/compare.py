@@ -629,9 +629,6 @@ class analyse:
         N = df.shape[1]
         
         # 2.2 Calculate R
-        # For this, we'll loop through the columns and append every
-        # relevant correlation to an array calles "r_s". Then, we'll
-        # calculate the mean of "r_s"
         rs = np.array([])
         for i, col in enumerate(df_corr.columns):
             sum_ = df_corr[col][i+1:].values
@@ -693,5 +690,5 @@ if __name__ == "__main__":
     analyse.multivariate_regression(pred='sig')
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
     
-    # analyse.cronbach_alpha(analyse.response_data)
+    # analyse.cronbach_alpha(analyse.response_data) 
     
