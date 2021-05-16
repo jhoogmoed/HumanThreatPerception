@@ -225,9 +225,9 @@ class analyse:
         
         plt.clf()
         plt.plot(v_ccurve)
-        plt.title('Cummulative eigencalue curve')
+        plt.title('Cumulative eigenvalue curve')
         plt.xlabel('Component')
-        plt.ylabel('Cummulative eigenvalue')
+        plt.ylabel('Cumulative eigenvalue')
 
         # Save figure
         plt.savefig(self.results_folder +
@@ -426,8 +426,8 @@ class analyse:
 
         self.pca = gray_pca_df
         
-        # r2 = round(gray_pca_df[2].corr(self.response_mean)**2,5)
-        # self.plot_correlation(gray_pca_df,self.response_mean_last,name1='Gray pca component 2',name2='response_mean_last',r2=r2)
+        r = round(gray_pca_df[2].corr(self.response_mean),5)
+        self.plot_correlation(gray_pca_df,self.response_mean_last,name1='Gray pca component 2',name2='response_mean_last',r=r)
 
         print("Saving images")
         for i in range(0, nc):
@@ -443,12 +443,7 @@ class analyse:
             max_pixel_blue = np.max(abs(eigen_frames_blue[i]))
             max_pixel_green = np.max(abs(eigen_frames_green[i]))
             max_pixel_red = np.max(abs(eigen_frames_red[i]))
-            # cv2.imshow(('Feature: '+str(i)+' Eigenface'),eigen_frames[i]* (1/max_pixel))
-            # cv2.waitKey(0)
-            # cv2.imwrite(os.path.join(self.results_folder,'pca',('gray' + str(i)+'.png')),((eigen_frames_gray[i])*1/max_pixel_gray)*255)
-            # cv2.imwrite(os.path.join(self.results_folder,'pca',('blue' + str(i)+'.png')),((eigen_frames[i])*1/max_pixel_blue)*255)
-            # cv2.imwrite(os.path.join(self.results_folder,'pca',('green' + str(i)+'.png')),((eigen_frames[i])*1/max_pixel_green)*255)
-            # cv2.imwrite(os.path.join(self.results_folder,'pca',('red' + str(i)+'.png')),((eigen_frames[i])*1/max_pixel_red)*255)
+
             gray_channel = eigen_frames_gray[i]*1/max_pixel_gray*255
             blue_channel = eigen_frames_blue[i]*1/max_pixel_blue*255
             green_channel = eigen_frames_green[i]*1/max_pixel_green*255
@@ -799,8 +794,8 @@ if __name__ == "__main__":
     # analyse.risky_images(model=False)
     # analyse.risk_accidents(plotBool=False)
     # analyse.risk_ranking()
-    # analyse.PCA()
-    analyse.multivariate_regression(pred='sig')
+    analyse.PCA()
+    # analyse.multivariate_regression(pred='sig')
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
 
     # analyse.cronbach_alpha(analyse.response_data)
