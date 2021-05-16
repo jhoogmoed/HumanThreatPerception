@@ -379,7 +379,7 @@ class analyse:
 
         # PCA decomposition
         print("Running decomposition")
-        nc = 15  # number of model variables
+        nc = 50  # number of model variables
         pca = decomposition.PCA(n_components=nc)
 
         std_gray = StandardScaler()
@@ -427,7 +427,7 @@ class analyse:
         self.pca = gray_pca_df
         
         r = round(gray_pca_df[2].corr(self.response_mean),5)
-        self.plot_correlation(gray_pca_df,self.response_mean_last,name1='Gray pca component 2',name2='response_mean_last',r=r)
+        self.plot_correlation(gray_pca_df[2],self.response_mean_last,name1='Gray pca component 2',name2='response_mean_last',r=r)
 
         print("Saving images")
         for i in range(0, nc):
@@ -794,8 +794,8 @@ if __name__ == "__main__":
     # analyse.risky_images(model=False)
     # analyse.risk_accidents(plotBool=False)
     # analyse.risk_ranking()
-    analyse.PCA()
-    # analyse.multivariate_regression(pred='sig')
+    # analyse.PCA()
+    analyse.multivariate_regression(pred='sig')
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
 
     # analyse.cronbach_alpha(analyse.response_data)

@@ -99,7 +99,7 @@ bnds = ((0, 10), (0, 10), (0, 10), (0, 10), (0, 10),
 
 
 # Basinhopper method
-# minimizer_kwargs = {"method": "L-BFGS-B",'bounds':bnds,'options':{'maxfun': 100000,'ftol': 1e-8,'gtol': 1e-8}}
+# minimizer_kwargs = {"method": "L-BFGS-B",'options':{'maxfun': 100000,'ftol': 1e-8,'gtol': 1e-8}}
 # res = optimize.basinhopping(get_correlation, x0,minimizer_kwargs=minimizer_kwargs,disp=True)#,accept_test=mybounds
 
 # Differential evolution method

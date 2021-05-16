@@ -90,8 +90,7 @@ class kitti_parser:
             self.road_types.append(road)
             self.par_city.append((road == 'city')*1)
             self.par_residential.append((road == 'residential')*1)
-            self.par_road.append((road == 'road')*1)
-            
+            self.par_road.append((road == 'road')*1)          
 
     def get_objects(self):
         self.objectsList = []
@@ -415,9 +414,9 @@ if __name__ == "__main__":
     kp = kitti_parser(dataPath,drive,resultsFolder)
     
     # Example parameters
-    x = [0., 1.458974, 2.63547244, 0.96564807, 2.21222542, 1.65225034, 0., 0., 1.,
-         2.20176468, 2.40070779, 0.1750559,
-         0.20347586, 6.54656438]
+    # x = [0., 1.458974, 2.63547244, 0.96564807, 2.21222542, 1.65225034, 0., 0., 1.,
+    #      2.20176468, 2.40070779, 0.1750559,
+    #      0.20347586, 6.54656438]
     
     x = [0.2, 0.4, 0.6, 1., 0.2, 1., 0.6, 0.2, 0., 
               3., 1.5, 0., 
