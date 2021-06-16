@@ -69,10 +69,10 @@ def get_corr(result, data_range, print_bool = False):
     r['i'] = results[data_range]['model_imminence'].corr(ranges[data_range])
 
     if print_bool == True:
-        print("Combination corr : %s" % (r['c']**2))
-        print("Type corr        : %s" % (r['t']**2))
-        print("Probability corr : %s" % (r['p']**2))
-        print("Imminence corr   : %s" % (r['i']**2))
+        print("Combination corr : %s" % (r['c']))
+        print("Type corr        : %s" % (r['t']))
+        print("Probability corr : %s" % (r['p']))
+        print("Imminence corr   : %s" % (r['i']))
     return r
 
 
@@ -81,15 +81,15 @@ def get_corr(result, data_range, print_bool = False):
 # x0 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 x0 = list(params.values())
 
-bnds = ((0, 10), (0, 10), (0, 10), (0, 10), (0, 10),
-        (0, 10), (0, 10), (0, 10), (0, 10),
-        (0, 10), (0, 10), (0, 10),
-        (0, 10), (0, 10))
+# bnds = ((0, 10), (0, 10), (0, 10), (0, 10), (0, 10),
+#         (0, 10), (0, 10), (0, 10), (0, 10),
+#         (0, 10), (0, 10), (0, 10),
+#         (0, 10), (0, 10))
 
-# bnds = ((-100, 100), (-100, 100), (-100, 100), (-100, 100), (-100, 100),
-#         (-100, 100), (-100, 100), (-100, 100), (-100, 100),
-#         (-100, 100), (-100, 100), (-100, 100),
-#         (-100, 100), (0, 100))
+bnds = ((-100, 100), (-100, 100), (-100, 100), (-100, 100), (-100, 100),
+        (-100, 100), (-100, 100), (-100, 100), (-100, 100),
+        (-100, 100), (-100, 100), (-100, 100),
+        (-100, 100), (0, 100))
 
 
 # Broyden-Fletcher-Goldfarb-Shanno method

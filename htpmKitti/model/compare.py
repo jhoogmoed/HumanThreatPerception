@@ -125,8 +125,8 @@ class analyse:
 
         # Plot correlation of first and last half
         self.plot_correlation(self.response_mean_first, self.response_mean_last,
-                              self.response_std_last, self.response_std_first,
-                              'first_half', 'last_half', 'general_autocorrelation', r=round(r_fl, 5))
+                              None, None,
+                              'Group 1', 'Group 2', 'Autocorrelation', r=round(r_fl, 5))
 
         # self.training_data = self.response_data
         middle_frame = int(round(self.response_data.shape[1])/2)
@@ -213,21 +213,24 @@ class analyse:
         v_cutoff = len(v_ccurve[(v_ccurve <= 0.8)])+1
         # print(v_cutoff)
         plt.clf()
-        plt.plot(v[0])
+        plt.plot(v[0], marker="o")
         plt.plot(np.ones(len(v[0])))
         plt.title('Scree plot')
         plt.xlabel('Component')
         plt.ylabel('Eigenvalue')
+        plt.grid()
+
 
         # Save figure
         plt.savefig(self.results_folder +
                     'regression/' + 'scree_plot' + '.png')
         
         plt.clf()
-        plt.plot(v_ccurve)
+        plt.plot(v_ccurve, marker ="o")
         plt.title('Cumulative eigenvalue curve')
         plt.xlabel('Component')
         plt.ylabel('Cumulative eigenvalue')
+        plt.grid()
 
         # Save figure
         plt.savefig(self.results_folder +
@@ -473,7 +476,8 @@ class analyse:
         # train = self.pca.iloc[0:middle]
         # test = self.pca.iloc[middle:len(self.pca)]
 
-        lr = LinearRegression(normalize=True)
+        lr = LinearRegression(normalize=False, copy_X=True)
+        # lr = LinearRegression()
         if (pred == 'default'):
             predictor_keys = ['general_velocity', 'general_distance_mean',
                               'general_number_bjects', 'manual_breaklight', 'occluded_mean']
@@ -496,6 +500,21 @@ class analyse:
         print(self.sig_params)
         lr.fit(predictors[0:middle], self.response_mean[0:middle])
         predictions = lr.predict(predictors[middle:predictors.shape[0]])
+        # print(predictors[0:middle])
+        # print(lr.predict(predictors[0:middle]))
+        data = predictors[0:middle] * lr.coef_
+        results = pd.DataFrame(data, columns=predictor_keys)
+        results.insert(0, "intercept", lr.intercept_)
+        results.to_csv(self.results_folder +
+                             'regression/' + 'regression.csv')
+        
+        data2 = predictors[middle:predictors.shape[0]] * lr.coef_
+        results2 = pd.DataFrame(data2, columns=predictor_keys)
+        results2.insert(0, "intercept", lr.intercept_)
+        results2.to_csv(self.results_folder +
+                             'regression/' + 'regression2.csv')
+        
+        
 
         # Analyse result
         r = np.corrcoef(
@@ -758,6 +777,7 @@ class analyse:
             plt.title(name1 + ' vs. ' + name2 + " | r = %s" % r)
         else:
             plt.title(name1 + ' vs. ' + name2)
+        plt.grid()
         plt.xlabel(name1)
         plt.ylabel(name2)
 
@@ -796,6 +816,7 @@ if __name__ == "__main__":
     # analyse.risk_ranking()
     # analyse.PCA()
     analyse.multivariate_regression(pred='sig')
+    # analyse.multivariate_regression()
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
 
     # analyse.cronbach_alpha(analyse.response_data)
