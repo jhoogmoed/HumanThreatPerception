@@ -195,16 +195,16 @@ class analyse:
 
         for parameter in self.parameter_keys:
             # Get correlation
-            r2 = self.model_data[parameter].corr(self.response_mean_last)**2
+            r = self.model_data[parameter].corr(self.response_mean)
 
             # Print correlation
-            # print('{:<25}'.format(parameter) + ': R^2 =',f'{r2:.5f}')
+            # print('{:<25}'.format(parameter) + ': r =',f'{r:.5f}')
 
             # Save figure correlation
             if plotBool == True:
                 self.plot_correlation(self.model_data[parameter], self.response_mean,
                                       None, self.response_std,
-                                      str(parameter), 'response_mean', parameter, round(r2, 5))
+                                      str(parameter), 'response_mean', parameter, r=round(r, 5))
 
         # Check model cronbach alpha
         # self.cronbach_alpha(self.model_data[['model_type',  'model_imminence',  'model_probability']])
@@ -759,6 +759,44 @@ class analyse:
             # plt.ylabel("Risk score")
         print('Saved survey images')
 
+    def road_velocity(self):
+        road_data = self.model_data[self.model_data['road_road']==1]
+        residential_data = self.model_data[self.model_data['road_residential']==1]
+        city_data = self.model_data[self.model_data['road_city']==1]
+        
+        road_mean = self.response_mean[road_data.index]
+        residential_mean = self.response_mean[residential_data.index]
+        city_mean = self.response_mean[city_data.index]
+        
+        r_road = road_data['general_velocity'].corr(road_mean)
+        r_residential = residential_data['general_velocity'].corr(residential_mean)
+        r_city = city_data['general_velocity'].corr(city_mean)
+        
+        self.plot_correlation(road_data['general_velocity'],road_mean,name1="velocity_road",name2="response_mean", r=round(r_road,5), parameter="road_velocity")
+        self.plot_correlation(residential_data['general_velocity'],residential_mean,name1="velocity_residential",name2="response_mean", r=round(r_residential,5), parameter="residential_velocity")
+        self.plot_correlation(city_data['general_velocity'],city_mean,name1="velocity_city",name2="response_mean", r=round(r_city,5), parameter="city_velocity")
+        
+    def sorted_mu_sig(self):
+        mu = self.response_mean
+        std = self.response_std
+        sorting = mu.sort_values()
+        
+        # Plot linear fit
+        plt.figure(figsize=(6,2))
+        plt.plot(range(0,210), mu[sorting.index])
+        plt.plot(range(0,210), std[sorting.index])
+        plt.grid()
+        plt.legend(["mean", "std"])
+        plt.xlabel("Image")
+        plt.ylabel("Perceived risk")
+        plt.tight_layout()
+        # plt.show()
+
+        # Save figure
+        plt.savefig(self.results_folder +
+                    'survey_analysis/' + "mu_std" + '.png')
+        
+    
     def cronbach_alpha(self, df):
         # 1. Transform the df into a correlation matrix
         df_corr = df.corr()
@@ -788,26 +826,32 @@ class analyse:
 
         # Plot errobar figure
         plt.clf()
-        plt.errorbar(series1, series2, std2, std1, linestyle='None',
-                     marker='.', markeredgecolor='green')
-        if(not isnan(r2)):
-            plt.title(name1 + ' vs. ' + name2 + " | R^2 = %s" % r2)
-        elif(not isnan(r)):
-            plt.title(name1 + ' vs. ' + name2 + " | r = %s" % r)
-        else:
-            plt.title(name1 + ' vs. ' + name2)
-        plt.grid()
-        plt.xlabel(name1)
-        plt.ylabel(name2)
+        # plt.errorbar(series1, series2, std2, std1, linestyle='None',
+        #              marker='.', markeredgecolor='green')
+        # plt.errorbar(series1, series2, linestyle='None',
+        #              marker='.', markeredgecolor='green')
+        plt.errorbar(series1, series2, linestyle='None',
+                     marker='.')
+        # if(not isnan(r2)):
+        #     plt.title(name1 + ' vs. ' + name2 + " | R^2 = %s" % r2)
+        # elif(not isnan(r)):
+        #     plt.title(name1 + ' vs. ' + name2 + " | r = %s" % r)
+        # else:
+        #     plt.title(name1 + ' vs. ' + name2)
 
         # Create linear fit of model and responses
         linear_model = np.polyfit(series1, series2, 1)
         linear_model_fn = np.poly1d(linear_model)
         x_s = np.arange(series1.min(), series1.max(),
                         ((series1.max()-series1.min())/1000))
-
+        
         # Plot linear fit
-        plt.plot(x_s, linear_model_fn(x_s), color="red")
+        plt.plot(x_s, linear_model_fn(x_s))
+        
+        plt.legend(["r = {}".format(r), 'images'])
+        plt.grid()
+        plt.xlabel(name1)
+        plt.ylabel(name2)
 
         # Save figure
         plt.savefig(self.results_folder +
@@ -830,13 +874,15 @@ if __name__ == "__main__":
     analyse.split()
     analyse.random()
     # analyse.risk_accidents()
-    analyse.model(plotBool=False)
+    analyse.model(plotBool=True)
     # analyse.risky_images(model=False)
     # analyse.risk_accidents(plotBool=False)
     # analyse.risk_ranking()
     # analyse.PCA()
-    analyse.multivariate_regression(pred='sig')
+    # analyse.multivariate_regression(pred='sig')
     # analyse.multivariate_regression()
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
+    analyse.road_velocity()
+    analyse.sorted_mu_sig()
 
     # analyse.cronbach_alpha(analyse.response_data)
