@@ -4,6 +4,7 @@ import os
 import shutil
 import numpy as np
 import random
+from numpy.lib.function_base import average
 import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
@@ -153,17 +154,35 @@ class analyse:
         self.single_response = data.iloc[random_person]
 
         # Get correlation of data and random person
+        correlations = []
+        for i in range(0, len(data)):
+            single_response = data.iloc[i]
+            r = single_response.corr(data_response_mean)
+            correlations.append(r)
         r_sm = self.single_response.corr(data_response_mean)
         r2_sm = r_sm*r_sm
         print('{:<30}'.format('Single random') + ': N' +
               '{:<4}'.format(str(random_person)) + " vs Human R^2 = " + str(r2_sm))
 
         # Plot correlation of data and random person
-        self.plot_correlation(self.single_response, data_response_mean,
-                              data_response_std, [],
-                              ('Person n'+str(random_person)), 'Response mean', 'random', r2_sm)
-
+        # self.plot_correlation(self.single_response, data_response_mean,
+        #                       data_response_std, [],
+        #                       ('Person n'+str(random_person)), 'Response mean', 'random', r2_sm)
         print('Got random correlation')
+        
+        pd_corr = pd.DataFrame(correlations)
+        pd_corr.to_csv(self.results_folder + 'filtered_responses/' + 'individual_corr.csv')
+        
+        plt.figure()
+        plt.boxplot(correlations)
+        plt.title("Participant correlation")
+        plt.xlabel("Participants")
+        plt.ylabel("Correlation")
+        plt.savefig(self.results_folder + 'filtered_responses/' +
+                    'individual_corr' + '.png')
+
+        
+        print("Average over correlation: {}, stdev: ".format(pd_corr.mean()))
 
     def model(self, plotBool=True):
         self.model_data = pd.read_csv(
@@ -809,6 +828,7 @@ if __name__ == "__main__":
     analyse.info()
     # analyse.find_outliers(10)
     analyse.split()
+    analyse.random()
     # analyse.risk_accidents()
     analyse.model(plotBool=False)
     # analyse.risky_images(model=False)
