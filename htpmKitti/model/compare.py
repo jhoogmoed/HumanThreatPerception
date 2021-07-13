@@ -10,10 +10,12 @@ import seaborn as sn
 import matplotlib.pyplot as plt
 import cv2
 
+import simpledorff
 from pandas.core.frame import DataFrame
 from sklearn import decomposition, datasets
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import cohen_kappa_score
 
 
 class analyse:
@@ -162,7 +164,7 @@ class analyse:
         r_sm = self.single_response.corr(data_response_mean)
         r2_sm = r_sm*r_sm
         print('{:<30}'.format('Single random') + ': N' +
-              '{:<4}'.format(str(random_person)) + " vs Human R^2 = " + str(r2_sm))
+              '{:<4}'.format(str(random_person)) + " vs Human R^2 = " + str(r_sm))
 
         # Plot correlation of data and random person
         # self.plot_correlation(self.single_response, data_response_mean,
@@ -173,16 +175,21 @@ class analyse:
         pd_corr = pd.DataFrame(correlations)
         pd_corr.to_csv(self.results_folder + 'filtered_responses/' + 'individual_corr.csv')
         
-        plt.figure()
-        plt.boxplot(correlations)
-        plt.title("Participant correlation")
-        plt.xlabel("Participants")
-        plt.ylabel("Correlation")
+        # plt.figure()
+        # plt.boxplot(pd_corr)
+        pd_corr.plot.box(vert=False, figsize=(10,3))
+        # plt.title("Participant correlation")
+        plt.ylabel("Participants")
+        plt.xlabel("Correlation")
+        plt.grid()
+        plt.yticks([])
+        plt.tight_layout()
+
         plt.savefig(self.results_folder + 'filtered_responses/' +
                     'individual_corr' + '.png')
-
         
-        print("Average over correlation: {}, stdev: ".format(pd_corr.mean()))
+        # print(correlations)
+        print("Average over correlation: {}, stdev: ".format(pd_corr.median()))
 
     def model(self, plotBool=True):
         self.model_data = pd.read_csv(
@@ -234,7 +241,7 @@ class analyse:
         plt.clf()
         plt.plot(v[0], marker="o")
         plt.plot(np.ones(len(v[0])))
-        plt.title('Scree plot')
+        # plt.title('Scree plot')
         plt.xlabel('Component')
         plt.ylabel('Eigenvalue')
         plt.grid()
@@ -246,7 +253,7 @@ class analyse:
         
         plt.clf()
         plt.plot(v_ccurve, marker ="o")
-        plt.title('Cumulative eigenvalue curve')
+        # plt.title('Cumulative eigenvalue curve')
         plt.xlabel('Component')
         plt.ylabel('Cumulative eigenvalue')
         plt.grid()
@@ -782,7 +789,7 @@ class analyse:
         sorting = mu.sort_values()
         
         # Plot linear fit
-        plt.figure(figsize=(6,2))
+        plt.figure(figsize=(10,3))
         plt.plot(range(0,210), mu[sorting.index])
         plt.plot(range(0,210), std[sorting.index])
         plt.grid()
@@ -795,8 +802,7 @@ class analyse:
         # Save figure
         plt.savefig(self.results_folder +
                     'survey_analysis/' + "mu_std" + '.png')
-        
-    
+         
     def cronbach_alpha(self, df):
         # 1. Transform the df into a correlation matrix
         df_corr = df.corr()
@@ -818,6 +824,29 @@ class analyse:
         print('Cronbach alpha: {}'.format(cronbach_alpha))
         print('Calculated cronbach alpha')
 
+    def krippendorffs_alpha(self):
+        # print(self.response_data.transpose())
+        # annotation_triples = []
+        # for i in range(0, len(self.response_data)):
+        #     annotator = self.response_data.index[i]
+        #     for j in range(0,len(self.response_data.columns)):
+        #         image = str(j)
+        #         response = round(self.response_data.values[i][j],1)
+        #         annotation_triples.append((annotator, image, response))
+        # input_data = pd.DataFrame(annotation_triples,columns=["annotator_id", "document_id", "annotation"])
+        # print(input_data)
+        # alpha = simpledorff.calculate_krippendorffs_alpha_for_df(input_data,experiment_col='document_id',
+        #                                          annotator_col='annotator_id',
+        #                                          class_col='annotation')
+        alpha = simpledorff.calculate_krippendorffs_alpha(self.response_data)
+        print(alpha)
+            
+
+        # ratingtask = agreement.AnnotationTask(data=annotation_triples)
+        
+        # print('Krippendorff\'s alpha:',ratingtask.alpha())
+        # print('Scott\'s pi:',ratingtask.pi())
+        
     def plot_correlation(self, series1, series2,
                          std1=None,
                          std2=None,
@@ -874,7 +903,7 @@ if __name__ == "__main__":
     analyse.split()
     analyse.random()
     # analyse.risk_accidents()
-    analyse.model(plotBool=True)
+    analyse.model(plotBool=False)
     # analyse.risky_images(model=False)
     # analyse.risk_accidents(plotBool=False)
     # analyse.risk_ranking()
@@ -882,7 +911,13 @@ if __name__ == "__main__":
     # analyse.multivariate_regression(pred='sig')
     # analyse.multivariate_regression()
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
-    analyse.road_velocity()
-    analyse.sorted_mu_sig()
-
+    # analyse.road_velocity()
+    # analyse.sorted_mu_sig()
     # analyse.cronbach_alpha(analyse.response_data)
+    # analyse.krippendorffs_alpha()
+    analyse.plot_correlation(series1=analyse.model_data['general_velocity'], 
+                             series2=analyse.model_data['general_number_bjects'],
+                             parameter="velocit_nobjects",
+                             name1='general_velocity',
+                             name2='general_number_objects',
+                             r=round(analyse.model_data["general_velocity"].corr(analyse.model_data["general_number_bjects"]),4))
