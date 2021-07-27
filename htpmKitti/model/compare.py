@@ -10,9 +10,10 @@ import seaborn as sn
 import matplotlib.pyplot as plt
 import cv2
 
-import simpledorff
+# import simpledorff
 from pandas.core.frame import DataFrame
 from sklearn import decomposition, datasets
+import sklearn
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import cohen_kappa_score
@@ -268,10 +269,12 @@ class analyse:
 
         significant_parameters = set([])
         # print(v_cutoff)
+        loading = v[1] * [v**0.5 for v in v[0]]
         
         for column in range(0, v_cutoff):
             for row in range(0, len(v[1])):
                 if (abs(v[1][row, column]) >= 0.4):
+                # if (abs(loading[row, column]) >= 0.8):
                     # if (row <= 3):
                     #     pass
                     # else:
@@ -281,16 +284,16 @@ class analyse:
         
         # Plot corr of sigs
         # plt.clf()
-        # sn.heatmap(self.model_data[self.sig_params].corr(method='pearson'),vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True,yticklabels=self.sig_params)
+        # sn.heatmap(self.model_data[self.].corr(method='pearson'),vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True,yticklabels=self.)
         # plt.title('Correlations of significant parameters')
         # plt.show()
 
         # Get eigenvector heatmap
-        # plt.clf()
-        # sn.heatmap(v[1],vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True,yticklabels=p_keys)
-        # plt.title('Eigenvectors')
-        # plt.xlabel('Eigenvector index')
-        # plt.ylabel('Parameter')
+        # plt.figure()
+        # sn.heatmap(loading, vmax = 1,vmin = -1,cmap = 'RdBu_r', linewidths=.5, annot=True,yticklabels=p_keys,fmt='.2f')
+        # # plt.title('Eigenvectors')
+        # plt.xlabel('Loading of principle component')
+        # plt.ylabel('Values')
         # plt.show()
 
         # Save figure
@@ -518,23 +521,27 @@ class analyse:
             
 
         predictors = self.model_data[predictor_keys]
-
+        sc = StandardScaler()
+        predictors_stand = sc.fit_transform(predictors)
+        
         middle = int(round(predictors.shape[0]/2))
+        print(predictors_stand[middle])
+
 
         # Fit regression
         print("Fitting regression model")
         print(self.sig_params)
-        lr.fit(predictors[0:middle], self.response_mean[0:middle])
-        predictions = lr.predict(predictors[middle:predictors.shape[0]])
+        lr.fit(predictors_stand[0:middle], self.response_mean[0:middle])
+        predictions = lr.predict(predictors_stand[middle:predictors.shape[0]])
         # print(predictors[0:middle])
         # print(lr.predict(predictors[0:middle]))
-        data = predictors[0:middle] * lr.coef_
+        data = predictors_stand[0:middle] * lr.coef_
         results = pd.DataFrame(data, columns=predictor_keys)
         results.insert(0, "intercept", lr.intercept_)
         results.to_csv(self.results_folder +
                              'regression/' + 'regression.csv')
         
-        data2 = predictors[middle:predictors.shape[0]] * lr.coef_
+        data2 = predictors_stand[middle:predictors.shape[0]] * lr.coef_
         results2 = pd.DataFrame(data2, columns=predictor_keys)
         results2.insert(0, "intercept", lr.intercept_)
         results2.to_csv(self.results_folder +
@@ -549,8 +556,8 @@ class analyse:
         self.plot_correlation(predictions, self.response_mean[middle:len(
             self.response_mean)], name1="Multivariate regression", name2="Response test", parameter="regression_multivariate", r=round(r, 5))
         print('Lr coef: {}'.format(lr.coef_))
-
-        self.cronbach_alpha(self.model_data[predictor_keys])
+        print('Lr coef deep: {}'.format(lr.coef_[0]))
+        # self.cronbach_alpha(self.model_data[predictor_keys])
         print('Performed multivariate regression')
 
     def risk_accidents(self, plotBool=False):
@@ -838,8 +845,9 @@ class analyse:
         # alpha = simpledorff.calculate_krippendorffs_alpha_for_df(input_data,experiment_col='document_id',
         #                                          annotator_col='annotator_id',
         #                                          class_col='annotation')
-        alpha = simpledorff.calculate_krippendorffs_alpha(self.response_data)
-        print(alpha)
+        # alpha = simpledorff.calculate_krippendorffs_alpha(self.response_data)
+        # print(alpha)
+        cohen_kappa_score(self.response_data)
             
 
         # ratingtask = agreement.AnnotationTask(data=annotation_triples)
@@ -888,10 +896,10 @@ class analyse:
 
 
 if __name__ == "__main__":
-    dataPath = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
+    dataPath = '/media/jim/HDD/university/master/thesis/ROS/data/2011_09_26'
     drive = '/test_images'
-    resultsFolder = '/home/jim/HDDocuments/university/master/thesis/results/'
-    mergedDataFile = '/home/jim/HDDocuments/university/master/thesis/results/filtered_responses/merged_data.csv'
+    resultsFolder = '/media/jim/HDD/university/master/thesis/results/'
+    mergedDataFile = '/media/jim/HDD/university/master/thesis/results/filtered_responses/merged_data.csv'
     modelDataFile = 'model_results.csv'
 
     analyse = analyse(dataPath, drive, mergedDataFile,
@@ -908,16 +916,16 @@ if __name__ == "__main__":
     # analyse.risk_accidents(plotBool=False)
     # analyse.risk_ranking()
     # analyse.PCA()
-    # analyse.multivariate_regression(pred='sig')
+    analyse.multivariate_regression(pred='sig')
     # analyse.multivariate_regression()
     # analyse.plot_correlation(analyse.model_data['road_road'],analyse.model_data['general_velocity'])
     # analyse.road_velocity()
     # analyse.sorted_mu_sig()
     # analyse.cronbach_alpha(analyse.response_data)
     # analyse.krippendorffs_alpha()
-    analyse.plot_correlation(series1=analyse.model_data['general_velocity'], 
-                             series2=analyse.model_data['general_number_bjects'],
-                             parameter="velocit_nobjects",
-                             name1='general_velocity',
-                             name2='general_number_objects',
-                             r=round(analyse.model_data["general_velocity"].corr(analyse.model_data["general_number_bjects"]),4))
+    # analyse.plot_correlation(series1=analyse.model_data['general_velocity'], 
+    #                          series2=analyse.model_data['general_number_bjects'],
+    #                          parameter="velocit_nobjects",
+    #                          name1='general_velocity',
+    #                          name2='general_number_objects',
+    #                          r=round(analyse.model_data["general_velocity"].corr(analyse.model_data["general_number_bjects"]),4))
