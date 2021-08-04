@@ -8,6 +8,7 @@ import numpy as np
 # Import select
 import htpmKitti.kitti.parseTrackletXML as xmlParser
 
+
 # -------------------------------------------
 def main(kittiDir,drive):
     xmlExtension    = 'tracklet_labels.xml'       

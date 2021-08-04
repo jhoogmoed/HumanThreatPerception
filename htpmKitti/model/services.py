@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os
 import numpy as np
-import htpmKitti.kitti.tracklet_parser as tracklet_parser
+# import kitti.tracklet_parser as tracklet_parser
+# import kitti.tracklet_parser as tracklet_parser
 import collections
 import pandas as pd
 

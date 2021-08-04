@@ -11,10 +11,10 @@ from scipy.optimize import minimize
 
 
 # Set data folder paths
-dataPath = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
+dataPath = '/media/jim/HDD/university/master/thesis/ROS/data/2011_09_26'
 drive = '/test_images'
-results_folder = '/home/jim/HDDocuments/university/master/thesis/results/'
-mergedDataPath = '/home/jim/HDDocuments/university/master/thesis/results/filtered_responses/merged_data.csv'
+results_folder = '/media/jim/HDD/university/master/thesis/results/'
+mergedDataPath = '/media/jim/HDD/university/master/thesis/results/filtered_responses/merged_data.csv'
 modelDataPath = 'model_results.csv'
 
 # Get responses from participants

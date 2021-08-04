@@ -128,6 +128,8 @@ class analyse:
         # print('{:<25}'.format('autocorrelation') + ': R^2 =',f'{r2_fl:.5f}')
 
         # Plot correlation of first and last half
+        plt.figure(figsize=(10,4))
+        
         self.plot_correlation(self.response_mean_first, self.response_mean_last,
                               None, None,
                               'Group 1', 'Group 2', 'Autocorrelation', r=round(r_fl, 5))
@@ -137,6 +139,8 @@ class analyse:
         self.data_training = self.response_data.iloc[:, 0:middle_frame]
         self.data_testing = self.response_data.iloc[:,
                                                     middle_frame:self.response_data.shape[1]]
+        plt.tight_layout()
+        # plt.show()
 
         print('Split data')
 
@@ -178,10 +182,14 @@ class analyse:
         
         # plt.figure()
         # plt.boxplot(pd_corr)
-        pd_corr.plot.box(vert=False, figsize=(10,3))
+        
+        pd_corr.plot.box(vert=False, figsize=(10,2))
+        parts = plt.vlines(0.5,1,1)
+        model = plt.vlines(0.58568,0.8,1.2,colors='orange')
         # plt.title("Participant correlation")
-        plt.ylabel("Participants")
+        # plt.ylabel("Participants")
         plt.xlabel("Correlation")
+        plt.legend([parts, model],['Participants', 'Model'])
         plt.grid()
         plt.yticks([])
         plt.tight_layout()
@@ -202,11 +210,13 @@ class analyse:
         self.model_data.pop('general_frame_number')
 
         for parameter in self.parameter_keys:
+            
+            
             # Get correlation
             r = self.model_data[parameter].corr(self.response_mean)
 
             # Print correlation
-            # print('{:<25}'.format(parameter) + ': r =',f'{r:.5f}')
+            print('{:<25}'.format(parameter) + ': r =',f'{r:.5f}')
 
             # Save figure correlation
             if plotBool == True:
@@ -304,7 +314,7 @@ class analyse:
             plt.clf()
             sn.heatmap(corrMatrix, vmax=1, vmin=-1,
                        cmap='RdBu_r', linewidths=.5, annot=True)
-            plt.show()
+            # plt.show()
             print('Got model data and correlations')
         else:
             pass
@@ -344,20 +354,27 @@ class analyse:
     def risk_ranking(self):
         # Sort list of mean response values
         response_mean_sorted = self.response_mean.sort_values()
-        i = 0
-        for image in response_mean_sorted.index:
-            shutil.copyfile(self.dataPath + self.drive + '/image_02/data/' + str(
-                image) + '.png', self.results_folder + 'risk_sorted_images/' + '%s.png' % i)
-            i += 1
+        
+        # i = 0
+        # for image in response_mean_sorted.index:
+        #     shutil.copyfile(self.dataPath + self.drive + '/image_02/data/' + str(
+        #         image) + '.png', self.results_folder + 'risk_sorted_images/' + '%s.png' % i)
+        #     i += 1
 
         # Sort list of model combination values
         response_model_sorted = pd.Series(
             self.model_data['model_combination']).sort_values()
-        i = 0
-        for image in response_model_sorted.index:
-            shutil.copyfile(self.dataPath + self.drive + '/image_02/data/' + str(image) +
-                            '.png', self.results_folder + 'risk_sorted_images/model' + '%s.png' % i)
-            i += 1
+        
+        # i = 0
+        # for image in response_model_sorted.index:
+        #     shutil.copyfile(self.dataPath + self.drive + '/image_02/data/' + str(image) +
+        #                     '.png', self.results_folder + 'risk_sorted_images/model' + '%s.png' % i)
+        #     i += 1
+
+        r = round(np.corrcoef(self.response_mean, self.model_data['model_combination'])[1][0],4)
+        self.plot_correlation(self.response_mean, self.model_data['model_combination'], name1="Experiment result", name2="Model result", parameter="model_experiment", r=r)
+        print(np.corrcoef(response_mean_sorted.index,response_model_sorted.index))
+
 
         print('Ranked images on risk')
 
@@ -700,7 +717,7 @@ class analyse:
         plt.clf()
         sn.heatmap(inter_group_corr, vmax=1, vmin=-1,
                     cmap='RdBu_r', linewidths=.5, annot=True)
-        plt.show()
+        # plt.show()
             
         
         
@@ -862,7 +879,7 @@ class analyse:
                          parameter='Parameter', r2=np.nan, r = np.nan):
 
         # Plot errobar figure
-        plt.clf()
+        plt.figure(figsize=(10,4))
         # plt.errorbar(series1, series2, std2, std1, linestyle='None',
         #              marker='.', markeredgecolor='green')
         # plt.errorbar(series1, series2, linestyle='None',
@@ -889,6 +906,7 @@ class analyse:
         plt.grid()
         plt.xlabel(name1)
         plt.ylabel(name2)
+        plt.tight_layout()
 
         # Save figure
         plt.savefig(self.results_folder +
@@ -900,7 +918,8 @@ if __name__ == "__main__":
     drive = '/test_images'
     resultsFolder = '/media/jim/HDD/university/master/thesis/results/'
     mergedDataFile = '/media/jim/HDD/university/master/thesis/results/filtered_responses/merged_data.csv'
-    modelDataFile = 'model_results.csv'
+    modelDataFile = 'model_results_small_bnds.csv'
+    # modelDataFile = 'model_results_no_opt.csv'
 
     analyse = analyse(dataPath, drive, mergedDataFile,
                       modelDataFile, resultsFolder)
@@ -914,7 +933,7 @@ if __name__ == "__main__":
     analyse.model(plotBool=False)
     # analyse.risky_images(model=False)
     # analyse.risk_accidents(plotBool=False)
-    # analyse.risk_ranking()
+    analyse.risk_ranking()
     # analyse.PCA()
     analyse.multivariate_regression(pred='sig')
     # analyse.multivariate_regression()
