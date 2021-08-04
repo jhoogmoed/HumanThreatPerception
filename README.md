@@ -14,7 +14,7 @@ The code is split up into three sections based on the pipeline described above:
 
 # File contents
 ## kitti
-- **image_selector.py **
+- **image_selector.py**
 This file selects images from a given dataset. Needed to select images are a absolute data path to relevant folder, a relative path to the images/labels/oxts data and the different road types used.
 
 - **parseTrackletXML.py**
