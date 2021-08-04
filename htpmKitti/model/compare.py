@@ -914,7 +914,7 @@ class analyse:
 
 
 if __name__ == "__main__":
-    dataPath = '/media/jim/HDD/university/master/thesis/ROS/data/2011_09_26'
+    dataPath = '/dataset'
     drive = '/test_images'
     resultsFolder = '/media/jim/HDD/university/master/thesis/results/'
     mergedDataFile = '/media/jim/HDD/university/master/thesis/results/filtered_responses/merged_data.csv'

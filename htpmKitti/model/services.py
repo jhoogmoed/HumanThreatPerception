@@ -407,7 +407,7 @@ class kitti_parser:
 
 if __name__ == "__main__":
     # Example input
-    dataPath       = '/home/jim/HDDocuments/university/master/thesis/ROS/data/2011_09_26'
+    dataPath       = '/dataset'
     drive          = '/test_images'
     resultsFolder  = '/home/jim/HDDocuments/university/master/thesis/results'
     
