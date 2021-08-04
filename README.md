@@ -14,6 +14,8 @@ The code is split up into three sections based on the pipeline described above:
 
 **For a model based on ros, which can give realtime predictions, see the corresponding thread**
 
+**If you want to use the code, you need to change the paths in the relevant files. For example change the data path to:** <code>'/resources/test_data'</code>
+
 # File contents
 ## kitti
 - **image_selector.py**
