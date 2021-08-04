@@ -12,6 +12,8 @@ The code is split up into three sections based on the pipeline described above:
 2. Parsing of survey result
 3. Model creation, optimistation, and comparison
 
+**For a model based on ros, which can give realtime predictions, see the corresponding thread**
+
 # File contents
 ## kitti
 - **image_selector.py**
