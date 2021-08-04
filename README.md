@@ -12,6 +12,37 @@ The code is split up into three sections based on the pipeline described above:
 2. Parsing of survey result
 3. Model creation, optimistation, and comparison
 
+# File contents
+## kitti
+- **image_selector.py **
+This file selects images from a given dataset. Needed to select images are a absolute data path to relevant folder, a relative path to the images/labels/oxts data and the different road types used.
+
+- **parseTrackletXML.py**
+This file, created by Christian Herdtweck (Max Planck Institute for Biological Cybernetics) parses xml object files from the KITTI dataset to python objects.
+
+- **tracklet_parser.py**
+This file parses xml files to .txt per image with help form parseTrackletXML.py
+
+## online
+- **appenFunctions.py**
+This file parses a raw csv file with survey responses from Appen to a cleaned up csv file.
+
+- **dataCombiner.py**
+This file combines the csv files from appenFUnctions.py and herokuFunctions.py whilest merging them on participant and filtering cheaters.
+
+- **herokuFunctions.py**
+This file parses json files with results from the online survey to a csv file.
+
+## model
+- **compare.py**
+This file analyses the survey results and compares them with the model predicitons. Most of the results come from this file.
+
+- **optimisation.py**
+This file uses optimisation methods to calculate optimal model parameters. Multiple optimisation methods can be used.
+
+- **services.py**
+This file's main function is the creation of csv files which contain all feature values per image. This is also done for the model feature, where it is a prediction.
+
 
 # Dependencies
 - python3
